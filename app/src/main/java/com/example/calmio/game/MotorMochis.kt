@@ -67,6 +67,10 @@ class MotorMochis {
     // Colección de elementos temáticos del juego (cosas que flotan o vuelan)
     val emojisDisponibles = listOf("🎈", "🫧", "🌸", "🦋")
 
+    // NUEVO: el motor recibe una función de fuera para reproducir el sonido.
+    // Así el motor no sabe nada de Android/Context, solo avisa "explótame".
+    var onExplotar: (() -> Unit)? = null
+
     /**
      * Procesa la interacción del usuario con la pantalla.
      * En lugar de moverlos (como en el motor anterior), aquí los "destruye" o marca como explotados.
@@ -81,6 +85,7 @@ class MotorMochis {
                 mochi.explotado = true // Cambiamos su estado para que deje de moverse
                 mochi.tiempoExplotado = System.currentTimeMillis() // Guardamos cuándo murió
                 puntuacion++ // ¡Premio! Sumamos un punto al jugador
+                onExplotar?.invoke() // NUEVO: avisamos para que suene
                 break // Solo podemos explotar uno por cada toque, así que salimos del bucle
             }
         }

@@ -1,5 +1,8 @@
 package com.example.calmio.ui.screens
 
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.media.SoundPool
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -14,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -21,6 +25,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.calmio.R
 import com.example.calmio.game.MotorMochis
 
 // onVolver: igual que en ArosScreen, el juego avisa "quiero salir"
@@ -28,6 +33,7 @@ import com.example.calmio.game.MotorMochis
 @Composable
 fun MochisScreen(onVolver: () -> Unit) {
 
+    val context = LocalContext.current // NUEVO: necesitamos el contexto para los sonidos
     val motor = remember { MotorMochis() }
     var tamanyoPantalla by remember { mutableStateOf(IntSize.Zero) }
     var contadorFotogramas by remember { mutableStateOf(0) }
@@ -35,7 +41,45 @@ fun MochisScreen(onVolver: () -> Unit) {
     val medidorDeTexto = rememberTextMeasurer()
     val animacion = rememberInfiniteTransition()
 
-    // Fondo animado (igual que el del profesor)
+    // NUEVO: Preparamos el SoundPool para el sonido de explosión
+    // (igual que motorEfectos en Base.kt)
+    val soundPool = remember {
+        val atributos = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        SoundPool.Builder().setMaxStreams(5).setAudioAttributes(atributos).build()
+    }
+
+    // NUEVO: Cargamos el sonido de explosión desde res/raw/
+    val idSonidoExplosion = remember {
+        soundPool.load(context, R.raw.sonido_explosion, 1)
+    }
+
+    // NUEVO: Conectamos el motor con el sonido de explosión
+    LaunchedEffect(Unit) {
+        motor.onExplotar = {
+            soundPool.play(idSonidoExplosion, 1f, 1f, 0, 0, 1f)
+        }
+    }
+
+    // NUEVO: Música de fondo con MediaPlayer (igual que en Base.kt)
+    DisposableEffect(Unit) {
+        val mediaPlayer = MediaPlayer.create(context, R.raw.musica_mochis)
+        mediaPlayer.isLooping = true
+        mediaPlayer.setVolume(0.9f, 0.9f)
+        mediaPlayer.start()
+
+        // onDispose se ejecuta cuando el usuario sale de la pantalla
+        // Es importante parar la música al salir, igual que hace surfaceDestroyed en Base.kt
+        onDispose {
+            mediaPlayer.stop()
+            mediaPlayer.release()
+            soundPool.release()
+        }
+    }
+
+    // Fondo animado
     val faseOla by animacion.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
