@@ -144,6 +144,27 @@ fun CalmioApp() {
             )
         }
 
+        // ── JUEGO MOCHIS ───────────────────────────────────────────────────
+        composable("mochis") {
+            val scope = rememberCoroutineScope()
+            MochisScreen(
+                onVolver = {
+                    scope.launch {
+                        val yaJugo = stressViewModel.yaJugoHoy()
+                        if (yaJugo) {
+                            navController.navigate("main") {
+                                popUpTo("mochis") { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate("stress_despues") {
+                                popUpTo("mochis") { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
         // ── ESTRÉS DESPUÉS ─────────────────────────────────────────────────
         composable("stress_despues") {
             StressScreen(

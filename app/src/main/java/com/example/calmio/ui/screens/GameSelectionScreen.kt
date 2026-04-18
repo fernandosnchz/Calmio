@@ -63,6 +63,16 @@ fun GameSelectionScreen(
             color = VerdeSalvia,
             onClick = { onJuegoSeleccionado("aros") }
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        GameCard(
+            emoji = "🫧",
+            nombre = "Explotar Burbujas",
+            descripcion = "Toca las burbujas para explotar",
+            color = VerdeMenta,
+            onClick = { onJuegoSeleccionado("mochis") }
+        )
     }
 }
 
