@@ -1,7 +1,5 @@
 package com.example.calmio.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -12,20 +10,16 @@ private val CalmioColorScheme = lightColorScheme(
     onPrimary = Blanco,
     primaryContainer = VerdeMenta,
     onPrimaryContainer = TextoPrincipal,
-
     secondary = Terracota,
     onSecondary = Blanco,
     secondaryContainer = Color(0xFFEDD9C5),
     onSecondaryContainer = TextoPrincipal,
-
     background = Crema,
     onBackground = TextoPrincipal,
-
     surface = Blanco,
     onSurface = TextoPrincipal,
     surfaceVariant = SuperficieCard,
     onSurfaceVariant = TextoSuave,
-
     error = Error,
     onError = Blanco,
 )
