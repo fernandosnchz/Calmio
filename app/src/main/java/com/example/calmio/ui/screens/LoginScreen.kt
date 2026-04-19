@@ -117,14 +117,19 @@ fun LoginScreen(
                         text = "Bienvenido",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextoPrincipal
+                        color = TextoPrincipal,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Text(
                         text = "Inicia sesión para continuar",
                         fontSize = 12.sp,
                         color = TextoSuave,
                         fontWeight = FontWeight.Light,
-                        modifier = Modifier.padding(bottom = 22.dp)
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 22.dp)
                     )
 
                     // Campo Email con label superior
