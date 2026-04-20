@@ -165,6 +165,27 @@ fun CalmioApp() {
             )
         }
 
+        // ── JUEGO PESCA ────────────────────────────────────────────────────
+        composable("pesca") {
+            val scope = rememberCoroutineScope()
+            PescaScreen(
+                onVolver = {
+                    scope.launch {
+                        val yaJugo = stressViewModel.yaJugoHoy()
+                        if (yaJugo) {
+                            navController.navigate("main") {
+                                popUpTo("pesca") { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate("stress_despues") {
+                                popUpTo("pesca") { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
         // ── ESTRÉS DESPUÉS ─────────────────────────────────────────────────
         composable("stress_despues") {
             StressScreen(
