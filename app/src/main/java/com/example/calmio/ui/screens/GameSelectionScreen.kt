@@ -79,7 +79,7 @@ fun GameSelectionScreen(
         GameCard(
             emoji = "🎣",
             nombre = "Juego de Pesca",
-            descripcion = "Captura los peces con los anzuelos",
+            descripcion = "Captura peces en los anzuelos",
             color = Terracota,   // ya lo tienes definido en tu tema
             onClick = { onJuegoSeleccionado("pesca") }
         )
