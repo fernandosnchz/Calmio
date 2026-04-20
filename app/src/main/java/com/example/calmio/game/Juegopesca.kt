@@ -2,12 +2,16 @@
  * =========================================================================================
  * ARCHIVO: JuegoPesca.kt
  * Proyecto: Calmio
+ * Ubicación: app/src/main/java/com/example/calmio/game/JuegoPesca.kt
  * =========================================================================================
  * Adaptado del original Pesca.kt del profesor para integrarse en com.example.calmio.
  *
  * CAMBIOS RESPECTO AL ORIGINAL:
- * - Package cambiado de `com.example.myapplication` a `com.example.calmio`
- * - El resto del código es idéntico al original del profesor
+ * - Package: com.example.calmio.game
+ * - Paleta de colores suavizada para encajar con el tema Calmio
+ * - Fondo verde menta en lugar del rosa original
+ * - Ojos añadidos a cada pez (círculo blanco + pupila negra)
+ * - Música comentada (descomenta si tienes res/raw/musica_pesca)
  * =========================================================================================
  */
 package com.example.calmio.game
@@ -19,54 +23,60 @@ import android.graphics.Paint
 import android.graphics.Path
 import com.example.calmio.R
 
-/**
- * Entorno simulado de pesca lúdica y captura automática basado en áreas de influencia radiales.
- *
- * @param context El ecosistema nativo general.
- */
 class JuegoPescarView(context: Context) : JuegoAguaBase(context) {
 
-    /** Pincel dinámico reservado íntegramente a perfilar y pigmentar los mamíferos y escamas acuáticas. */
+    /** Pincel principal para el cuerpo y la cola del pez. */
     private val paintPez = Paint()
 
-    /** Pincel macizo oscuro orientado a la forja geométrica visual de los palos de caña y ganchos finales en herradura. */
+    /** Pincel blanco para el ojo del pez. */
+    private val paintOjo = Paint().apply {
+        color = Color.WHITE
+        isAntiAlias = true
+    }
+
+    /** Pincel negro para la pupila del pez. */
+    private val paintPupila = Paint().apply {
+        color = Color.BLACK
+        isAntiAlias = true
+    }
+
+    /** Pincel para los hilos y anzuelos. */
     private val paintGancho = Paint().apply {
         color = Color.DKGRAY
         style = Paint.Style.STROKE
         strokeWidth = 12f
     }
 
-    /** Repositorio de coordenadas precalculadas conteniendo las ubicaciones estáticas X de la maquinaria pescadora. */
+    /** Coordenadas X de los tres anzuelos. */
     private val ganchosX = mutableListOf<Float>()
 
-    /** Límite Y donde terminan las cuerdas y nace la trampa herradural (Gancho final de pesca). */
+    /** Altura Y donde terminan los hilos y empieza el gancho. */
     private var ganchosY = 0f
 
-    /** Estructura de Listado que provee una inmensa gama de vivos colores coralinos. */
+    /** Paleta de colores suaves en sintonía con el tema Calmio. */
     private val coloresPeces = listOf(
-        Color.parseColor("#D50000"), Color.parseColor("#C51162"), Color.parseColor("#AA00FF"),
-        Color.parseColor("#6200EA"), Color.parseColor("#304FFE"), Color.parseColor("#2962FF"),
-        Color.parseColor("#00B8D4"), Color.parseColor("#00BFA5"), Color.parseColor("#00C853"),
-        Color.parseColor("#64DD17"), Color.parseColor("#AEEA00"), Color.parseColor("#FFD600"),
-        Color.parseColor("#FFAB00"), Color.parseColor("#FF6D00"), Color.parseColor("#DD2C00")
+        Color.parseColor("#4DB6AC"), // Verde menta
+        Color.parseColor("#80CBC4"), // Verde salvia claro
+        Color.parseColor("#A5D6A7"), // Verde suave
+        Color.parseColor("#FFB74D"), // Naranja cálido
+        Color.parseColor("#F48FB1"), // Rosa
+        Color.parseColor("#CE93D8"), // Lila
+        Color.parseColor("#81D4FA"), // Azul cielo
+        Color.parseColor("#FFCC80"), // Melocotón
+        Color.parseColor("#EF9A9A")  // Rojo suave
     )
 
     init {
-        // Redefinimos un tono inferior cristalino (Azul turquesa océano lúdico).
-        paintBase.color = Color.parseColor("#D53985")
+        // Fondo verde menta en sintonía con el tema Calmio
+        paintBase.color = Color.parseColor("#4DB6AC")
 
         // Nombre del archivo a reproducir como música de fondo
         idMusicaFondo = R.raw.musica_pesca
     }
 
-    /**
-     * Motor de escalado y siembra posicional basándose en los anchos concretos dictados por la pantalla real del dispositivo.
-     */
     override fun inicializarNivel(ancho: Int, alto: Int) {
         ganchosY = alto * 0.25f
         ganchosX.clear()
-
-        // Distribuimos equitativamente los 3 anzuelos a lo largo del eje horizontal en cuotas perfectas de 25%.
         ganchosX.add(ancho * 0.25f)
         ganchosX.add(ancho * 0.5f)
         ganchosX.add(ancho * 0.75f)
@@ -74,15 +84,11 @@ class JuegoPescarView(context: Context) : JuegoAguaBase(context) {
         objetosFlotantes.clear()
         puntuacion = 0
 
-        // Invocamos un cardumen activo surtido de 12 peces diversos.
         for (i in 0 until 12) {
             generarNuevoObjeto()
         }
     }
 
-    /**
-     * Fábrica de biodiversidad. Instancia aleatoriamente cada elemento con una corpulencia (radio) imprevisible y peculiar.
-     */
     override fun generarNuevoObjeto() {
         val posX = (Math.random() * (width - 100) + 50).toFloat()
         val posY = (Math.random() * (height * 0.3f) + height * 0.5f).toFloat()
@@ -97,36 +103,50 @@ class JuegoPescarView(context: Context) : JuegoAguaBase(context) {
         )
     }
 
-    /**
-     * Motor Gráfico de renders encadenados para elementos vivos mutables y maquinaria inamovible (Ganchos).
-     */
     override fun dibujarJuego(canvas: Canvas) {
-        // Línea vertical que desciende como hilo grueso pescador unida a un barrido cóncavo (Arco de 180º).
+        // Dibujamos los hilos y anzuelos
         for (gx in ganchosX) {
             canvas.drawLine(gx, 0f, gx, ganchosY, paintGancho)
             canvas.drawArc(gx - 20f, ganchosY, gx + 20f, ganchosY + 40f, 0f, 180f, false, paintGancho)
         }
 
+        // Dibujamos cada pez
         for (p in objetosFlotantes) {
             paintPez.color = p.color
+            paintPez.isAntiAlias = true
 
-            // Óvalo ensanchado que compone la zona abultada vital principal del cuerpo o espina dorsal.
-            canvas.drawOval(p.x - p.radio * 1.5f, p.y - p.radio, p.x + p.radio * 1.5f, p.y + p.radio, paintPez)
+            // Cuerpo ovalado
+            canvas.drawOval(
+                p.x - p.radio * 1.5f, p.y - p.radio,
+                p.x + p.radio * 1.5f, p.y + p.radio,
+                paintPez
+            )
 
-            // Creación instantánea por fotograma de un diseño algorítmico poligonal para aleta caudal.
+            // Cola triangular
             val pathCola = Path()
             pathCola.moveTo(p.x - p.radio * 1.2f, p.y)
             pathCola.lineTo(p.x - p.radio * 2.8f, p.y - p.radio * 1.2f)
             pathCola.lineTo(p.x - p.radio * 2.8f, p.y + p.radio * 1.2f)
             pathCola.close()
-
             canvas.drawPath(pathCola, paintPez)
+
+            // Ojo blanco
+            canvas.drawCircle(
+                p.x + p.radio * 0.8f,
+                p.y - p.radio * 0.3f,
+                p.radio * 0.25f,
+                paintOjo
+            )
+            // Pupila negra
+            canvas.drawCircle(
+                p.x + p.radio * 0.9f,
+                p.y - p.radio * 0.3f,
+                p.radio * 0.12f,
+                paintPupila
+            )
         }
     }
 
-    /**
-     * Bucle analizador de atracción invisible y engarzado físico estricto.
-     */
     override fun comprobarLogicaEspecifica() {
         for (p in objetosFlotantes) {
 
@@ -142,16 +162,13 @@ class JuegoPescarView(context: Context) : JuegoAguaBase(context) {
             val radioCaptura = p.radio + 35f
 
             for (gx in ganchosX) {
-                val centroAnzueloX = gx
-                val centroAnzueloY = ganchosY + 20f
-
-                val dx = p.x - centroAnzueloX
-                val dy = p.y - centroAnzueloY
+                val dx = p.x - gx
+                val dy = p.y - (ganchosY + 20f)
                 val distancia = Math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
 
                 if (distancia < radioCaptura) {
-                    p.x = centroAnzueloX
-                    p.y = centroAnzueloY
+                    p.x = gx
+                    p.y = ganchosY + 20f
                     p.vx = 0f
                     p.vy = 0f
                     p.atrapado = true
