@@ -53,7 +53,7 @@ class JuegoPescarView(context: Context) : JuegoAguaBase(context) {
     /** Altura Y donde terminan los hilos y empieza el gancho. */
     private var ganchosY = 0f
 
-    /** Paleta de colores suaves en sintonía con el tema Calmio. */
+    /** Paleta de colores tema Calmio. */
     private val coloresPeces = listOf(
         Color.parseColor("#4DB6AC"), // Verde menta
         Color.parseColor("#80CBC4"), // Verde salvia claro
@@ -67,10 +67,10 @@ class JuegoPescarView(context: Context) : JuegoAguaBase(context) {
     )
 
     init {
-        // Fondo verde menta en sintonía con el tema Calmio
+        // Fondo verde menta tema Calmio
         paintBase.color = Color.parseColor("#4DB6AC")
 
-        // Nombre del archivo a reproducir como música de fondo
+        // Música de fondo
         idMusicaFondo = R.raw.musica_pesca
     }
 

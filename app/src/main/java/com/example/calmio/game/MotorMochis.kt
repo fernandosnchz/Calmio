@@ -41,8 +41,6 @@ data class Mochi(
         val distanciaAlCuadrado = (distanciaX * distanciaX) + (distanciaY * distanciaY)
         val radioAlCuadrado = radio * radio
 
-        // Multiplicamos por 3f para crear un área de detección mucho más generosa.
-        // Esto hace que el juego sea más fácil y agradable, especialmente en móviles.
         return distanciaAlCuadrado <= (radioAlCuadrado * 3f)
     }
 }
@@ -59,16 +57,12 @@ class MotorMochis {
     var puntuacion: Int = 0
 
     // En este juego, la "gravedad" actúa como flotabilidad (aceleración hacia arriba)
-    // Es un valor muy pequeño porque se suma continuamente en cada fotograma.
     private val gravedad = 0.01f
 
     var mochis = mutableStateListOf<Mochi>()
 
-    // Colección de elementos temáticos del juego (cosas que flotan o vuelan)
     val emojisDisponibles = listOf("🎈", "🫧", "🌸", "🦋")
 
-    // NUEVO: el motor recibe una función de fuera para reproducir el sonido.
-    // Así el motor no sabe nada de Android/Context, solo avisa "explótame".
     var onExplotar: (() -> Unit)? = null
 
     /**
@@ -82,10 +76,10 @@ class MotorMochis {
         // Recorremos de atrás hacia adelante para detectar el que está dibujado "encima"
         for (mochi in mochis.reversed()) {
             if (mochi.fueTocado(xToque, yToque)) {
-                mochi.explotado = true // Cambiamos su estado para que deje de moverse
-                mochi.tiempoExplotado = System.currentTimeMillis() // Guardamos cuándo murió
-                puntuacion++ // ¡Premio! Sumamos un punto al jugador
-                onExplotar?.invoke() // NUEVO: avisamos para que suene
+                mochi.explotado = true
+                mochi.tiempoExplotado = System.currentTimeMillis()
+                puntuacion++
+                onExplotar?.invoke()
                 break // Solo podemos explotar uno por cada toque, así que salimos del bucle
             }
         }
@@ -99,10 +93,10 @@ class MotorMochis {
      */
     fun crearNuevoEmoji(anchoPantalla: Float, altoPantalla: Float) {
         val nuevoMochi = Mochi(
-            x = Random.nextFloat() * anchoPantalla, // Posición horizontal al azar
-            y = altoPantalla + 150f, // Nace un poco más abajo del borde inferior (oculto)
+            x = Random.nextFloat() * anchoPantalla,
+            y = altoPantalla + 150f,
             velocidadY = 0f,
-            velocidadX = (Random.nextFloat() * 2f) - 1f, // Ligero movimiento lateral aleatorio
+            velocidadX = (Random.nextFloat() * 2f) - 1f,
             emoji = emojisDisponibles.random()
         )
         mochis.add(nuevoMochi)
@@ -127,7 +121,7 @@ class MotorMochis {
         for (mochi in mochis) {
             // FÍSICAS CONDICIONALES: Solo movemos los que NO han sido explotados
             if (!mochi.explotado) {
-                // Aumentamos su velocidad (aceleración continua)
+                // Aumentamos su velocidad
                 mochi.velocidadY += gravedad
                 // RESTAMOS la velocidad en Y. Como el punto 0 de Y está arriba,
                 // restar significa que el objeto sube (flota) por la pantalla.
@@ -149,10 +143,6 @@ class MotorMochis {
         }
     }
 
-    /**
-     * Vacía la lista completamente, dejando la pantalla en blanco y reseteando
-     * los elementos del juego.
-     */
     fun limpiarPantalla() {
         mochis.clear()
     }

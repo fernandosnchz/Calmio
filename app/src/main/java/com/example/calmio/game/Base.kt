@@ -35,7 +35,7 @@ data class ObjetoFlotante(
 
 abstract class JuegoAguaBase(context: Context) : SurfaceView(context), SurfaceHolder.Callback, Runnable, SensorEventListener {
 
-    // Callback para volver al menú — así no dependemos de ningún MainActivity concreto
+    // Callback para volver al menú
     var onVolverAlMenu: (() -> Unit)? = null
 
     protected val objetosFlotantes = mutableListOf<ObjetoFlotante>()
