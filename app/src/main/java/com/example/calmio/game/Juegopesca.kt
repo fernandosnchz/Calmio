@@ -1,19 +1,3 @@
-/**
- * =========================================================================================
- * ARCHIVO: JuegoPesca.kt
- * Proyecto: Calmio
- * Ubicación: app/src/main/java/com/example/calmio/game/JuegoPesca.kt
- * =========================================================================================
- * Adaptado del original Pesca.kt del profesor para integrarse en com.example.calmio.
- *
- * CAMBIOS RESPECTO AL ORIGINAL:
- * - Package: com.example.calmio.game
- * - Paleta de colores suavizada para encajar con el tema Calmio
- * - Fondo verde menta en lugar del rosa original
- * - Ojos añadidos a cada pez (círculo blanco + pupila negra)
- * - Música comentada (descomenta si tienes res/raw/musica_pesca)
- * =========================================================================================
- */
 package com.example.calmio.game
 
 import android.content.Context
