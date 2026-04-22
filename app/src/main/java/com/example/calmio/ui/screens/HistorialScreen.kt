@@ -5,6 +5,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -15,11 +16,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,7 +34,7 @@ import com.example.calmio.ui.theme.VerdeMenta
 import com.example.calmio.ui.theme.VerdeSalvia
 import com.example.calmio.viewmodel.StressViewModel
 
-// Colores de la gráfica y estados
+// Colores de la grafica y estados
 private val ColorAntes   = Color(0xFF4CAF50)
 private val ColorDespues = Color(0xFFF44336)
 
@@ -43,12 +46,17 @@ private val emojiPorJuego = mapOf(
     "burbujas" to "🫧"
 )
 
+// Cuantas sesiones mostrar antes del "ver mas"
+private const val SESIONES_INICIALES = 5
 
 @Composable
 fun HistorialScreen(
     stressViewModel: StressViewModel = viewModel()
 ) {
     val sesiones by stressViewModel.todasLasSesiones.collectAsState()
+
+    // Controla si se muestran todas o solo las primeras
+    var mostrarTodas by remember { mutableStateOf(false) }
 
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
@@ -63,13 +71,13 @@ fun HistorialScreen(
             )
     ) {
         if (sesiones.isEmpty()) {
-            // -- Estado vacío centrado -----------------------------------------
+            // Estado vacio centrado
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("😌", fontSize = 64.sp)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Aún no tienes sesiones.\nJuega para ver tu evolución.",
+                        text = "Aun no tienes sesiones.\nJuega para ver tu evolucion.",
                         fontSize = 16.sp,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -77,41 +85,44 @@ fun HistorialScreen(
                 }
             }
         } else {
+            val sesionesVisibles = if (mostrarTodas) sesiones else sesiones.take(SESIONES_INICIALES)
+            val hayMas = sesiones.size > SESIONES_INICIALES
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                // -- Header ----------------------------------------------------
+                // Header
                 item {
                     Spacer(modifier = Modifier.height(28.dp))
-
                     AnimatedVisibility(
                         visible = visible,
                         enter = fadeIn(tween(500)) + slideInVertically(tween(500)) { -20 }
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Text(
-                                text = "🌿 Tu evolución",
+                                text = "🌿 Tu evolucion",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = VerdeSalvia
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Estrés antes y después de jugar",
+                                text = "Estres antes y despues de jugar",
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // -- Chips de resumen ------------------------------------------
+                // Chips de resumen
                 item {
                     AnimatedVisibility(
                         visible = visible,
@@ -119,7 +130,7 @@ fun HistorialScreen(
                     ) {
                         val promedioAntes   = sesiones.map { it.estresAntes }.average().toFloat()
                         val promedioDespues = sesiones.map { it.estresDespues }.average().toFloat()
-                        val mejoras         = sesiones.count { it.estresDespues < it.estresAntes }
+                        val positivas       = sesiones.count { it.estresDespues < it.estresAntes }
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -133,23 +144,22 @@ fun HistorialScreen(
                             )
                             ResumenChip(
                                 modifier = Modifier.weight(1f),
-                                etiqueta = "Media después",
+                                etiqueta = "Media despues",
                                 valor = "%.1f".format(promedioDespues),
                                 color = ColorDespues
                             )
                             ResumenChip(
                                 modifier = Modifier.weight(1f),
                                 etiqueta = "+ positivas",
-                                valor = "$mejoras",
+                                valor = "$positivas",
                                 color = VerdeSalvia
                             )
                         }
                     }
-
                     Spacer(modifier = Modifier.height(20.dp))
                 }
 
-                // -- Gráfica ---------------------------------------------------
+                // Grafica de barras
                 item {
                     AnimatedVisibility(
                         visible = visible,
@@ -169,18 +179,17 @@ fun HistorialScreen(
                                     horizontalArrangement = Arrangement.SpaceEvenly
                                 ) {
                                     LeyendaPunto(color = ColorAntes,   texto = "Antes")
-                                    LeyendaPunto(color = ColorDespues, texto = "Después")
+                                    LeyendaPunto(color = ColorDespues, texto = "Despues")
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                GraficaEstres(sesiones = sesiones.reversed())
+                                Spacer(modifier = Modifier.height(12.dp))
+                                GraficaBarras(sesiones = sesiones.takeLast(8))
                             }
                         }
                     }
-
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // -- Título de lista -------------------------------------------
+                // Titulo lista
                 item {
                     AnimatedVisibility(
                         visible = visible,
@@ -197,8 +206,8 @@ fun HistorialScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                 }
 
-                // -- Sesiones --------------------------------------------------
-                itemsIndexed(sesiones) { index, sesion ->
+                // Sesiones (limitadas o todas)
+                itemsIndexed(sesionesVisibles) { index, sesion ->
                     AnimatedVisibility(
                         visible = visible,
                         enter = fadeIn(tween(350, delayMillis = 350 + index * 60)) +
@@ -209,13 +218,119 @@ fun HistorialScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                 }
 
-                item { Spacer(modifier = Modifier.height(24.dp)) }
+                // Boton ver mas / ver menos
+                if (hayMas) {
+                    item {
+                        TextButton(
+                            onClick = { mostrarTodas = !mostrarTodas },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = if (mostrarTodas) "Ver menos" else "Ver mas (${sesiones.size - SESIONES_INICIALES} sesiones)",
+                                color = VerdeSalvia,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                } else {
+                    item { Spacer(modifier = Modifier.height(24.dp)) }
+                }
             }
         }
     }
 }
 
-// -- Chip de resumen ------------------------------------------------------------
+// Grafica de barras con etiquetas de numero
+@Composable
+fun GraficaBarras(sesiones: List<SesionEstres>) {
+    if (sesiones.isEmpty()) return
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+    ) {
+        val n            = sesiones.size
+        val maxValor     = 10f
+        val altoUtil     = size.height * 0.75f   // reservar 25% arriba para etiquetas
+        val baseY        = size.height * 0.85f   // linea base
+        val anchoGrupo   = size.width / n
+        val anchoBarraPar = anchoGrupo * 0.30f    // cada barra ocupa 30% del grupo
+        val separacion   = anchoGrupo * 0.05f     // espacio entre las dos barras
+
+        sesiones.forEachIndexed { i, sesion ->
+            val centroX  = anchoGrupo * i + anchoGrupo / 2f
+
+            val xAntes   = centroX - anchoBarraPar - separacion / 2f
+            val xDespues = centroX + separacion / 2f
+
+            val altoAntes   = (sesion.estresAntes   / maxValor) * altoUtil
+            val altoDespues = (sesion.estresDespues / maxValor) * altoUtil
+
+            val radioEsquina = 8f
+
+            // Barra "Antes"
+            drawRoundRect(
+                color = ColorAntes.copy(alpha = 0.85f),
+                topLeft = Offset(xAntes, baseY - altoAntes),
+                size = Size(anchoBarraPar, altoAntes),
+                cornerRadius = CornerRadius(radioEsquina, radioEsquina)
+            )
+
+            // Barra "Despues"
+            drawRoundRect(
+                color = ColorDespues.copy(alpha = 0.85f),
+                topLeft = Offset(xDespues, baseY - altoDespues),
+                size = Size(anchoBarraPar, altoDespues),
+                cornerRadius = CornerRadius(radioEsquina, radioEsquina)
+            )
+
+            // Etiqueta numero encima barra Antes
+            drawContext.canvas.nativeCanvas.apply {
+                val paint = android.graphics.Paint().apply {
+                    color = android.graphics.Color.parseColor("#4CAF50")
+                    textSize = 28f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                    isFakeBoldText = true
+                }
+                drawText(
+                    sesion.estresAntes.toString(),
+                    xAntes + anchoBarraPar / 2f,
+                    baseY - altoAntes - 8f,
+                    paint
+                )
+            }
+
+            // Etiqueta numero encima barra Despues
+            drawContext.canvas.nativeCanvas.apply {
+                val paint = android.graphics.Paint().apply {
+                    color = android.graphics.Color.parseColor("#F44336")
+                    textSize = 28f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                    isFakeBoldText = true
+                }
+                drawText(
+                    sesion.estresDespues.toString(),
+                    xDespues + anchoBarraPar / 2f,
+                    baseY - altoDespues - 8f,
+                    paint
+                )
+            }
+        }
+
+        // Linea base
+        drawLine(
+            color = Color.LightGray.copy(alpha = 0.6f),
+            start = Offset(0f, baseY),
+            end   = Offset(size.width, baseY),
+            strokeWidth = 1.5f
+        )
+    }
+}
+
+// Chip de resumen
 @Composable
 private fun ResumenChip(
     modifier: Modifier = Modifier,
@@ -260,48 +375,7 @@ private fun ResumenChip(
     }
 }
 
-// -- Gráfica (igual que el original, sin cambios en lógica) ---------------------
-@Composable
-fun GraficaEstres(sesiones: List<SesionEstres>) {
-    Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(160.dp)
-    ) {
-        if (sesiones.size < 2) return@Canvas
-
-        val pasoX        = size.width / (sesiones.size - 1).toFloat()
-        val altoUnitario = size.height / 10f
-
-        val pathAntes   = Path()
-        val pathDespues = Path()
-
-        sesiones.forEachIndexed { index, sesion ->
-            val x        = index * pasoX
-            val yAntes   = size.height - (sesion.estresAntes   * altoUnitario)
-            val yDespues = size.height - (sesion.estresDespues * altoUnitario)
-
-            if (index == 0) {
-                pathAntes.moveTo(x, yAntes)
-                pathDespues.moveTo(x, yDespues)
-            } else {
-                pathAntes.lineTo(x, yAntes)
-                pathDespues.lineTo(x, yDespues)
-            }
-
-            // Puntos rellenos con borde blanco
-            drawCircle(color = Color.White,        radius = 13f, center = Offset(x, yAntes))
-            drawCircle(color = ColorAntes,         radius = 10f, center = Offset(x, yAntes))
-            drawCircle(color = Color.White,        radius = 13f, center = Offset(x, yDespues))
-            drawCircle(color = ColorDespues,       radius = 10f, center = Offset(x, yDespues))
-        }
-
-        drawPath(path = pathAntes,   color = ColorAntes,   style = Stroke(width = 3.5f))
-        drawPath(path = pathDespues, color = ColorDespues, style = Stroke(width = 3.5f))
-    }
-}
-
-// -- Tarjeta de sesión ----------------------------------------------------------
+// Tarjeta de sesion
 @Composable
 fun TarjetaSesion(sesion: SesionEstres) {
     val mejoro       = sesion.estresDespues < sesion.estresAntes
@@ -359,7 +433,7 @@ fun TarjetaSesion(sesion: SesionEstres) {
                 )
             }
 
-            // Valores de estrés
+            // Valores de estres
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "${sesion.estresAntes}",
@@ -379,7 +453,6 @@ fun TarjetaSesion(sesion: SesionEstres) {
                     color = colorDespues
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                // Indicador de mejora/empeora
                 Box(
                     modifier = Modifier
                         .size(28.dp)
@@ -402,7 +475,7 @@ fun TarjetaSesion(sesion: SesionEstres) {
     }
 }
 
-// -- Leyenda de la gráfica (igual que el original) ------------------------------
+// Leyenda de la grafica
 @Composable
 fun LeyendaPunto(color: Color, texto: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
