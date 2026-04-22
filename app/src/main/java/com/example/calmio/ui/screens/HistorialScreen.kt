@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -92,6 +93,7 @@ fun HistorialScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 20.dp),
+                contentPadding = PaddingValues(bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 // Header
@@ -250,15 +252,15 @@ fun GraficaBarras(sesiones: List<SesionEstres>) {
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .height(210.dp)
     ) {
-        val n            = sesiones.size
-        val maxValor     = 10f
-        val altoUtil     = size.height * 0.75f   // reservar 25% arriba para etiquetas
-        val baseY        = size.height * 0.85f   // linea base
-        val anchoGrupo   = size.width / n
-        val anchoBarraPar = anchoGrupo * 0.30f    // cada barra ocupa 30% del grupo
-        val separacion   = anchoGrupo * 0.05f     // espacio entre las dos barras
+        val n             = sesiones.size
+        val maxValor      = 10f
+        val altoUtil      = size.height * 0.60f  // espacio util para barras
+        val baseY         = size.height * 0.75f  // linea base, deja espacio para fechas abajo
+        val anchoGrupo    = size.width / n
+        val anchoBarraPar = anchoGrupo * 0.30f
+        val separacion    = anchoGrupo * 0.05f
 
         sesiones.forEachIndexed { i, sesion ->
             val centroX  = anchoGrupo * i + anchoGrupo / 2f
@@ -327,6 +329,21 @@ fun GraficaBarras(sesiones: List<SesionEstres>) {
             end   = Offset(size.width, baseY),
             strokeWidth = 1.5f
         )
+
+        // Etiquetas de fecha bajo cada grupo (dia/mes)
+        sesiones.forEachIndexed { i, sesion ->
+            val centroX = anchoGrupo * i + anchoGrupo / 2f
+            // sesion.fecha viene como "dd/MM/yyyy", mostramos solo "dd/MM"
+            val fechaCorta = if (sesion.fecha.length >= 5) sesion.fecha.substring(0, 5) else sesion.fecha
+            drawContext.canvas.nativeCanvas.apply {
+                val paint = android.graphics.Paint().apply {
+                    color = android.graphics.Color.parseColor("#888888")
+                    textSize = 22f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                }
+                drawText(fechaCorta, centroX, baseY + 36f, paint)
+            }
+        }
     }
 }
 
