@@ -37,6 +37,7 @@ import java.util.*
 fun DiarioScreen(
     diarioViewModel: DiarioViewModel,
     stressViewModel: StressViewModel,
+    onVerHistorial: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val sesiones        by stressViewModel.todasLasSesiones.collectAsStateWithLifecycle()
@@ -190,6 +191,32 @@ fun DiarioScreen(
                     fontSize = 12.sp,
                     color = TextoSuave
                 )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ── Botón Ver historial ───────────────────────────────────────────
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(400, delayMillis = 500))
+            ) {
+                OutlinedButton(
+                    onClick = onVerHistorial,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.5.dp, VerdeSalvia.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Text(
+                        text = "📅  Ver historial del diario",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = VerdeSalvia
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
