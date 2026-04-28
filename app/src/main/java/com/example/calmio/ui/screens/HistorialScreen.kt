@@ -37,8 +37,8 @@ import com.example.calmio.ui.theme.VerdeSalvia
 import com.example.calmio.viewmodel.StressViewModel
 
 // Colores de la grafica
-private val ColorAntes   = Color(0xFF4CAF50)
-private val ColorDespues = Color(0xFFF44336)
+private val ColorAntes   = Color(0xFFF44336)
+private val ColorDespues = Color(0xFF4CAF50)
 
 // Emojis por nombre de juego
 private val emojiPorJuego = mapOf(

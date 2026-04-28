@@ -273,7 +273,7 @@ private fun ResumenEstresHoy(
                 Spacer(modifier = Modifier.height(2.dp))
                 val textoDetalle = if (mejorSesion != null &&
                     mejorSesion.estresDespues < mejorSesion.estresAntes) {
-                    "Bajaste de ${mejorSesion.estresAntes} → ${mejorSesion.estresDespues} jugando 🎉"
+                    "Bajaste de ${mejorSesion.estresAntes} → ${mejorSesion.estresDespues}"
                 } else {
                     "$totalSesiones ${if (totalSesiones == 1) "sesión" else "sesiones"} completadas"
                 }
@@ -284,15 +284,7 @@ private fun ResumenEstresHoy(
                 )
             }
 
-            // Etiqueta "auto"
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(SuperficieCard)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(text = "auto", fontSize = 10.sp, color = TextoSuave)
-            }
+
         }
     }
 }
