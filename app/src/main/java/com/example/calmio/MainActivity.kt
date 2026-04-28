@@ -155,6 +155,18 @@ fun CalmioApp() {
             })
         }
 
+        composable("respiracion") {
+            val scope = rememberCoroutineScope()
+            BreathingGameScreen(
+                onBack = {
+                    scope.launch {
+                        val dest = if (stressViewModel.yaJugoHoy()) "main" else "stress_despues"
+                        navController.navigate(dest) { popUpTo("respiracion") { inclusive = true } }
+                    }
+                }
+            )
+        }
+
         // ── ESTRÉS DESPUÉS ─────────────────────────────────────────────────
         composable("stress_despues") {
             StressScreen(
