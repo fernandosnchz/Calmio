@@ -107,11 +107,22 @@ fun CalmioApp() {
                     juegoActual = juego
                     navController.navigate(juego)
                 },
+                onVerHistorialDiario = {
+                    navController.navigate("historial_diario")
+                },
                 onCerrarSesion = {
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // ── HISTORIAL DIARIO ───────────────────────────────────────────────
+        composable("historial_diario") {
+            HistorialDiarioScreen(
+                diarioViewModel = diarioViewModel,
+                onVolver        = { navController.popBackStack() }
             )
         }
 
@@ -172,6 +183,7 @@ fun MainScreen(
     stressViewModel: StressViewModel,
     diarioViewModel: DiarioViewModel,
     onJuegoSeleccionado: (String) -> Unit,
+    onVerHistorialDiario: () -> Unit,
     onCerrarSesion: () -> Unit
 ) {
     var tabSeleccionada by remember { mutableStateOf(0) }
@@ -252,7 +264,8 @@ fun MainScreen(
             1 -> DiarioScreen(
                 modifier        = Modifier.padding(paddingValues),
                 diarioViewModel = diarioViewModel,
-                stressViewModel = stressViewModel
+                stressViewModel = stressViewModel,
+                onVerHistorial  = onVerHistorialDiario
             )
             2 -> HistorialScreen(
                 stressViewModel = stressViewModel
