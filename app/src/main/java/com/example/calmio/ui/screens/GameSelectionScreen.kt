@@ -25,6 +25,9 @@ import com.example.calmio.ui.theme.Terracota
 import com.example.calmio.ui.theme.VerdeMenta
 import com.example.calmio.ui.theme.VerdeSalvia
 
+// Color adicional para el juego de respiración (azul sereno)
+private val AzulSereno = Color(0xFF7EB8C9)
+
 @Composable
 fun GameSelectionScreen(
     modifier: Modifier = Modifier,
@@ -94,9 +97,10 @@ fun GameSelectionScreen(
 
             // ── Tarjetas ──────────────────────────────────────────────────────
             val juegos = listOf(
-                Triple("⭕", "Juego de Aros",     "Ensarta los aros en los postes" ) to Pair(VerdeSalvia, "aros"),
-                Triple("🫧", "Explotar Burbujas", "Toca las burbujas para explotar") to Pair(VerdeMenta,  "mochis"),
-                Triple("🎣", "Juego de Pesca",    "Captura peces en los anzuelos"  ) to Pair(Terracota,   "pesca"),
+                Triple("⭕", "Juego de Aros",       "Ensarta los aros en los postes"  ) to Pair(VerdeSalvia, "aros"),
+                Triple("🫧", "Explotar Burbujas",   "Toca las burbujas para explotar" ) to Pair(VerdeMenta,  "mochis"),
+                Triple("🎣", "Juego de Pesca",      "Captura peces en los anzuelos"   ) to Pair(Terracota,   "pesca"),
+                Triple("🌬️", "Respiración Guiada", "Sigue el círculo y respira"      ) to Pair(AzulSereno,  "respiracion"),
             )
 
             juegos.forEachIndexed { index, (info, action) ->
