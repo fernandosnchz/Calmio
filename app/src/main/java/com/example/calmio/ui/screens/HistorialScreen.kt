@@ -45,7 +45,8 @@ private val emojiPorJuego = mapOf(
     "aros"     to "⭕",
     "mochis"   to "🫧",
     "pesca"    to "🎣",
-    "burbujas" to "🫧"
+    "burbujas" to "🫧",
+    "respiracion" to "🌬️"
 )
 
 private const val SESIONES_INICIALES = 5
