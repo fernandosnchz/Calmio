@@ -62,7 +62,7 @@ fun GameSelectionScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "🌿 Calmio",
+                        text = "Bienvenido",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = VerdeSalvia
