@@ -50,6 +50,7 @@ private val emojiPorJuego = mapOf(
 )
 
 private const val SESIONES_INICIALES = 3
+private const val SESIONES_MAXIMO    = 15
 
 // Nombres de meses en español
 private val NOMBRES_MESES = listOf(
@@ -154,8 +155,10 @@ fun HistorialScreen(
                 }
             }
         } else {
-            val sesionesVisibles = if (mostrarTodas) sesionesFiltradas
-            else sesionesFiltradas.take(SESIONES_INICIALES)
+            val sesionesVisibles = if (mostrarTodas)
+                sesionesFiltradas.take(SESIONES_MAXIMO)
+            else
+                sesionesFiltradas.take(SESIONES_INICIALES)
             val hayMas = sesionesFiltradas.size >= SESIONES_INICIALES
 
             LazyColumn(
