@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material.icons.filled.Book          // ← icono diario
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -18,7 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.calmio.ui.screens.*
 import com.example.calmio.ui.theme.CalmioTheme
-import com.example.calmio.viewmodel.DiarioViewModel   // ← nuevo
+import com.example.calmio.viewmodel.DiarioViewModel
 import com.example.calmio.viewmodel.StressViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.AccountCircle
@@ -56,14 +56,13 @@ class MainActivity : ComponentActivity() {
 fun CalmioApp() {
     val navController   = rememberNavController()
     val stressViewModel: StressViewModel = viewModel()
-    val diarioViewModel: DiarioViewModel = viewModel()  // ← nuevo, sin factory
+    val diarioViewModel: DiarioViewModel = viewModel()
 
     var estresAntes  by remember { mutableStateOf(0) }
     var juegoActual  by remember { mutableStateOf("") }
 
     NavHost(navController = navController, startDestination = "login") {
 
-        // ── LOGIN ──────────────────────────────────────────────────────────
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
@@ -74,7 +73,6 @@ fun CalmioApp() {
             )
         }
 
-        // ── ESTRÉS ANTES ───────────────────────────────────────────────────
         composable("stress_antes") {
             val scope = rememberCoroutineScope()
             LaunchedEffect(Unit) {
@@ -98,7 +96,6 @@ fun CalmioApp() {
             )
         }
 
-        // ── MENÚ PRINCIPAL ─────────────────────────────────────────────────
         composable("main") {
             MainScreen(
                 stressViewModel     = stressViewModel,
@@ -118,7 +115,6 @@ fun CalmioApp() {
             )
         }
 
-        // ── HISTORIAL DIARIO ───────────────────────────────────────────────
         composable("historial_diario") {
             HistorialDiarioScreen(
                 diarioViewModel = diarioViewModel,
@@ -126,7 +122,6 @@ fun CalmioApp() {
             )
         }
 
-        // ── JUEGOS ─────────────────────────────────────────────────────────
         composable("aros") {
             val scope = rememberCoroutineScope()
             ArosScreen(onVolver = {
@@ -154,7 +149,6 @@ fun CalmioApp() {
                 }
             })
         }
-
         composable("respiracion") {
             val scope = rememberCoroutineScope()
             BreathingGameScreen(
@@ -167,7 +161,6 @@ fun CalmioApp() {
             )
         }
 
-        // ── ESTRÉS DESPUÉS ─────────────────────────────────────────────────
         composable("stress_despues") {
             StressScreen(
                 titulo         = "¿Cómo te sientes ahora?",
@@ -188,7 +181,6 @@ fun CalmioApp() {
     }
 }
 
-// ── PANTALLA PRINCIPAL CON BOTTOM NAV BAR ─────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -201,16 +193,19 @@ fun MainScreen(
     var tabSeleccionada by remember { mutableStateOf(0) }
     var menuExpandido   by remember { mutableStateOf(false) }
 
+    // ── CAMBIO 1: recoge el mapa de partidas como estado ──────────────────
+    val partidasPorJuego by stressViewModel.partidasPorJuego.collectAsState()
+
     Scaffold(
         containerColor = Crema,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text         = "🌿 Calmio",
-                        fontWeight   = FontWeight.Bold,
-                        fontSize     = 20.sp,
-                        color        = VerdeSalvia
+                        text       = "🌿 Calmio",
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 20.sp,
+                        color      = VerdeSalvia
                     )
                 },
                 actions = {
@@ -222,8 +217,8 @@ fun MainScreen(
                         )
                     }
                     DropdownMenu(
-                        expanded          = menuExpandido,
-                        onDismissRequest  = { menuExpandido = false }
+                        expanded         = menuExpandido,
+                        onDismissRequest = { menuExpandido = false }
                     ) {
                         DropdownMenuItem(
                             text = {
@@ -269,9 +264,11 @@ fun MainScreen(
         }
     ) { paddingValues ->
         when (tabSeleccionada) {
+            // ── CAMBIO 2: pasa partidasPorJuego a GameSelectionScreen ─────
             0 -> GameSelectionScreen(
-                modifier             = Modifier.padding(paddingValues),
-                onJuegoSeleccionado  = onJuegoSeleccionado
+                modifier            = Modifier.padding(paddingValues),
+                partidasPorJuego    = partidasPorJuego,
+                onJuegoSeleccionado = onJuegoSeleccionado
             )
             1 -> DiarioScreen(
                 modifier        = Modifier.padding(paddingValues),
