@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,14 +44,14 @@ private val ColorDespues = Color(0xFF4CAF50)
 
 // Emojis por nombre de juego
 private val emojiPorJuego = mapOf(
-    "aros"     to "⭕",
-    "mochis"   to "🫧",
-    "pesca"    to "🎣",
-    "burbujas" to "🫧",
+    "aros"        to "⭕",
+    "mochis"      to "🫧",
+    "pesca"       to "🎣",
+    "burbujas"    to "🫧",
     "respiracion" to "🌬️"
 )
 
-private const val SESIONES_INICIALES = 3
+private const val SESIONES_INICIALES = 5
 private const val SESIONES_MAXIMO    = 15
 
 // Nombres de meses en español
@@ -59,18 +61,25 @@ private val NOMBRES_MESES = listOf(
 )
 
 // Extrae "MM/yyyy" de una fecha "dd/MM/yyyy"
-private fun clavesMes(fecha: String): String {
-    return if (fecha.length >= 10) fecha.substring(3, 10) else fecha
-}
+private fun clavesMes(fecha: String): String =
+    if (fecha.length >= 10) fecha.substring(3, 10) else fecha
 
 // Nombre legible del mes desde clave "MM/yyyy"
 private fun nombreMes(clave: String): String {
     return try {
         val partes = clave.split("/")
-        val mes    = partes[0].toInt()
-        val anio   = partes[1]
+        val mes  = partes[0].toInt()
+        val anio = partes[1]
         "${NOMBRES_MESES[mes - 1]} $anio"
     } catch (e: Exception) { clave }
+}
+
+// Clave del mes actual en formato "MM/yyyy"
+private fun clavesMesActual(): String {
+    val cal = java.util.Calendar.getInstance()
+    val mes  = String.format("%02d", cal.get(java.util.Calendar.MONTH) + 1)
+    val anio = cal.get(java.util.Calendar.YEAR).toString()
+    return "$mes/$anio"
 }
 
 // Calcula racha de dias consecutivos jugados (fecha "dd/MM/yyyy")
@@ -99,8 +108,6 @@ private fun calcularRacha(sesiones: List<SesionEstres>): Int {
     }.time
 
     val unDia = 24L * 60 * 60 * 1000
-
-    // Si el dia mas reciente no es hoy ni ayer, la racha es 0
     val diffPrimero = hoy.time - diasUnicos.first().time
     if (diffPrimero > unDia) return 0
 
@@ -112,6 +119,9 @@ private fun calcularRacha(sesiones: List<SesionEstres>): Int {
     return racha
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Pantalla principal
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun HistorialScreen(
     stressViewModel: StressViewModel = viewModel()
@@ -122,13 +132,15 @@ fun HistorialScreen(
     var visible      by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
 
-    // Filtro por mes: lista de claves "MM/yyyy" disponibles + "Todos"
+    // CAMBIO: primer filtro es el mes actual si existe, si no "Todos"
+    val mesActual = clavesMesActual()
     val mesesDisponibles = remember(sesiones) {
-        listOf("Todos") + sesiones.map { clavesMes(it.fecha) }.distinct().sortedDescending()
+        sesiones.map { clavesMes(it.fecha) }.distinct().sortedDescending()
     }
-    var mesFiltro by remember { mutableStateOf("Todos") }
+    var mesFiltro by remember(mesesDisponibles) {
+        mutableStateOf(if (mesesDisponibles.contains(mesActual)) mesActual else "Todos")
+    }
 
-    // Sesiones filtradas por mes seleccionado
     val sesionesFiltradas = remember(sesiones, mesFiltro) {
         if (mesFiltro == "Todos") sesiones
         else sesiones.filter { clavesMes(it.fecha) == mesFiltro }
@@ -207,57 +219,57 @@ fun HistorialScreen(
                         val positivas       = sesiones.count { it.estresDespues < it.estresAntes }
 
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            // Fila 1: stats de estres
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 ResumenChip(
-                                    modifier = Modifier.weight(1f),
-                                    etiqueta = "Media antes",
-                                    valor = "%.1f".format(promedioAntes),
-                                    color = ColorAntes
+                                    modifier  = Modifier.weight(1f),
+                                    // CAMBIO: etiqueta más descriptiva
+                                    etiqueta  = "Estrés al entrar",
+                                    valor     = "%.1f".format(promedioAntes),
+                                    color     = ColorAntes
                                 )
                                 ResumenChip(
-                                    modifier = Modifier.weight(1f),
-                                    etiqueta = "Media despues",
-                                    valor = "%.1f".format(promedioDespues),
-                                    color = ColorDespues
+                                    modifier  = Modifier.weight(1f),
+                                    etiqueta  = "Estrés al salir",
+                                    valor     = "%.1f".format(promedioDespues),
+                                    color     = ColorDespues
                                 )
                                 ResumenChip(
-                                    modifier = Modifier.weight(1f),
-                                    etiqueta = "+ positivas",
-                                    valor = "$positivas",
-                                    color = VerdeSalvia
+                                    modifier  = Modifier.weight(1f),
+                                    // CAMBIO: etiqueta más clara para usuarios externos
+                                    etiqueta  = "Sesiones que te relajaron",
+                                    valor     = "$positivas",
+                                    color     = VerdeSalvia
                                 )
                             }
-
-                            // Fila 2: racha de dias
                             RachaCard(racha = racha)
                         }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
 
-                // ── Selector de mes ───────────────────────────────────────────
+                // ── Selector de mes — CAMBIO: dropdown en lugar de chips ──────
                 item {
                     AnimatedVisibility(
                         visible = visible,
                         enter = fadeIn(tween(400, delayMillis = 150))
                     ) {
-                        SelectorMes(
-                            meses = mesesDisponibles,
+                        SelectorMesDropdown(
+                            meses        = mesesDisponibles,
                             seleccionado = mesFiltro,
+                            mesActual    = mesActual,
                             onSeleccionar = {
-                                mesFiltro = it
-                                mostrarTodas = false  // reset al cambiar mes
+                                mesFiltro    = it
+                                mostrarTodas = false
                             }
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // ── Grafica de barras ─────────────────────────────────────────
+                // ── Grafica de barras — CAMBIO: incluye líneas de media ───────
                 item {
                     AnimatedVisibility(
                         visible = visible,
@@ -265,36 +277,76 @@ fun HistorialScreen(
                     ) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(
+                            shape    = RoundedCornerShape(20.dp),
+                            colors   = CardDefaults.cardColors(
                                 containerColor = Color.White.copy(alpha = 0.9f)
                             ),
                             elevation = CardDefaults.cardElevation(0.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
+                                // Título con nombre del mes seleccionado
+                                val tituloGrafica = if (mesFiltro == "Todos") "Todas las sesiones"
+                                else nombreMes(mesFiltro)
+                                Text(
+                                    text       = tituloGrafica,
+                                    fontSize   = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier   = Modifier.padding(bottom = 8.dp)
+                                )
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceEvenly
                                 ) {
                                     LeyendaPunto(color = ColorAntes,   texto = "Antes")
-                                    LeyendaPunto(color = ColorDespues, texto = "Despues")
+                                    LeyendaPunto(color = ColorDespues, texto = "Después")
                                 }
                                 Spacer(modifier = Modifier.height(12.dp))
+
                                 if (sesionesFiltradas.isEmpty()) {
                                     Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(80.dp),
-                                        contentAlignment = Alignment.Center
+                                        modifier           = Modifier.fillMaxWidth().height(80.dp),
+                                        contentAlignment   = Alignment.Center
                                     ) {
                                         Text(
                                             "Sin sesiones este mes",
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontSize = 13.sp
                                         )
                                     }
                                 } else {
-                                    GraficaBarras(sesiones = sesionesFiltradas.takeLast(8))
+                                    // CAMBIO: pasa todas las sesiones del mes, sin límite de 8
+                                    Box(
+                                        modifier = Modifier
+                                            .horizontalScroll(rememberScrollState())
+                                    ) {
+                                        GraficaBarras(sesiones = sesionesFiltradas)
+                                    }
+                                }
+
+                                // CAMBIO: bloque de medias del mes
+                                if (sesionesFiltradas.isNotEmpty()) {
+                                    val mediaAntes   = sesionesFiltradas.map { it.estresAntes }.average()
+                                    val mediaDespues = sesionesFiltradas.map { it.estresDespues }.average()
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.4f))
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        MediaBadge(
+                                            label = "Media antes",
+                                            valor = "%.1f".format(mediaAntes),
+                                            color = ColorAntes
+                                        )
+                                        MediaBadge(
+                                            label = "Media después",
+                                            valor = "%.1f".format(mediaDespues),
+                                            color = ColorDespues
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -309,10 +361,10 @@ fun HistorialScreen(
                         enter = fadeIn(tween(400, delayMillis = 300))
                     ) {
                         Text(
-                            text = "Sesiones recientes",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text          = "Sesiones recientes",
+                            fontSize      = 14.sp,
+                            fontWeight    = FontWeight.SemiBold,
+                            color         = MaterialTheme.colorScheme.onSurfaceVariant,
                             letterSpacing = 0.8.sp
                         )
                     }
@@ -323,14 +375,12 @@ fun HistorialScreen(
                 if (sesionesFiltradas.isEmpty()) {
                     item {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
+                            modifier         = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 "No jugaste este mes",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 14.sp
                             )
                         }
@@ -339,7 +389,7 @@ fun HistorialScreen(
                     itemsIndexed(sesionesVisibles) { index, sesion ->
                         AnimatedVisibility(
                             visible = visible,
-                            enter = fadeIn(tween(350, delayMillis = 350 + index * 60)) +
+                            enter   = fadeIn(tween(350, delayMillis = 350 + index * 60)) +
                                     slideInVertically(tween(350, delayMillis = 350 + index * 60)) { 20 }
                         ) {
                             TarjetaSesion(sesion = sesion)
@@ -347,18 +397,22 @@ fun HistorialScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                     }
 
-                    // Boton ver mas / ver menos
                     if (hayMas) {
                         item {
                             TextButton(
-                                onClick = { mostrarTodas = !mostrarTodas },
+                                onClick  = { mostrarTodas = !mostrarTodas },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = if (mostrarTodas) "Ver menos"
-                                    else "Ver mas (${sesionesFiltradas.size - SESIONES_INICIALES} sesiones)",
-                                    color = VerdeSalvia,
-                                    fontSize = 14.sp,
+                                    text = when {
+                                        mostrarTodas -> "Ver menos"
+                                        sesionesFiltradas.size > SESIONES_MAXIMO ->
+                                            "Ver más (mostrando $SESIONES_MAXIMO de ${sesionesFiltradas.size})"
+                                        else ->
+                                            "Ver más (${sesionesFiltradas.size - SESIONES_INICIALES} sesiones)"
+                                    },
+                                    color      = VerdeSalvia,
+                                    fontSize   = 14.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -370,73 +424,183 @@ fun HistorialScreen(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CAMBIO: Selector de mes como dropdown en lugar de chips horizontales
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun SelectorMesDropdown(
+    meses: List<String>,
+    seleccionado: String,
+    mesActual: String,
+    onSeleccionar: (String) -> Unit
+) {
+    var expandido by remember { mutableStateOf(false) }
+
+    val etiquetaSeleccionada = when (seleccionado) {
+        "Todos"   -> "Todas las sesiones"
+        mesActual -> "Este mes (${nombreMes(mesActual)})"
+        else      -> nombreMes(seleccionado)
+    }
+
+    // Lista completa: "Este mes" primero si existe, luego el resto, luego "Todos"
+    val opcionesTodas = buildList {
+        if (meses.contains(mesActual)) add(mesActual)
+        addAll(meses.filter { it != mesActual })
+        add("Todos")
+    }
+
+    Box {
+        Surface(
+            shape  = RoundedCornerShape(14.dp),
+            color  = Color.White.copy(alpha = 0.9f),
+            border = BorderStroke(1.dp, VerdeSalvia.copy(alpha = 0.35f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expandido = true }
+        ) {
+            Row(
+                modifier            = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment   = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text       = etiquetaSeleccionada,
+                    fontSize   = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = VerdeSalvia
+                )
+                Icon(
+                    imageVector        = Icons.Filled.KeyboardArrowDown,
+                    contentDescription = "Seleccionar mes",
+                    tint               = VerdeSalvia
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded        = expandido,
+            onDismissRequest = { expandido = false },
+            modifier        = Modifier.fillMaxWidth(0.9f)
+        ) {
+            opcionesTodas.forEach { clave ->
+                val activo = clave == seleccionado
+                val etiqueta = when (clave) {
+                    "Todos"   -> "Todas las sesiones"
+                    mesActual -> "Este mes (${nombreMes(clave)})"
+                    else      -> nombreMes(clave)
+                }
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text       = etiqueta,
+                            fontWeight = if (activo) FontWeight.Bold else FontWeight.Normal,
+                            color      = if (activo) VerdeSalvia
+                            else MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    onClick = {
+                        onSeleccionar(clave)
+                        expandido = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAMBIO: Badge de media debajo del gráfico
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun MediaBadge(label: String, valor: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = valor, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = color)
+        Text(text = label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAMBIO: Leyenda de línea discontinua para las medias
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun LeyendaLinea(color: Color, texto: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Canvas(modifier = Modifier.size(width = 16.dp, height = 2.dp)) {
+            drawLine(
+                color       = color,
+                start       = Offset(0f, size.height / 2),
+                end         = Offset(size.width, size.height / 2),
+                strokeWidth = 4f
+            )
+        }
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = texto, fontSize = 11.sp, color = Color.Gray)
+    }
+}
+
 // ── Tarjeta de racha ───────────────────────────────────────────────────────────
 @Composable
 private fun RachaCard(racha: Int) {
     val colorRacha = when {
-        racha >= 7  -> Color(0xFFFF9800)  // naranja: racha larga
-        racha >= 3  -> VerdeSalvia        // verde: racha media
-        racha >= 1  -> ColorAntes         // verde claro: racha corta
-        else        -> Color(0xFF9E9E9E)  // gris: sin racha
+        racha >= 7 -> Color(0xFFFF9800)
+        racha >= 3 -> VerdeSalvia
+        racha >= 1 -> ColorAntes
+        else       -> Color(0xFF9E9E9E)
     }
     val emoji = when {
-        racha >= 7  -> "🔥"
-        racha >= 3  -> "⭐"
-        racha >= 1  -> "🌱"
-        else        -> "💤"
+        racha >= 7 -> "🔥"
+        racha >= 3 -> "⭐"
+        racha >= 1 -> "🌱"
+        else       -> "💤"
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, colorRacha.copy(alpha = 0.30f), RoundedCornerShape(14.dp)),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colorRacha.copy(alpha = 0.07f)
-        ),
+        shape  = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = colorRacha.copy(alpha = 0.07f)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            modifier              = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(emoji, fontSize = 24.sp)
                 Column {
                     Text(
-                        text = "Racha actual",
+                        text     = "Racha actual",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = if (racha == 0) "Sin racha activa"
+                        text       = if (racha == 0) "Sin racha activa"
                         else if (racha == 1) "1 dia seguido"
                         else "$racha dias seguidos",
-                        fontSize = 15.sp,
+                        fontSize   = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = colorRacha
+                        color      = colorRacha
                     )
                 }
             }
-            // Barra visual de progreso hacia racha de 7
             val progreso = (racha / 7f).coerceIn(0f, 1f)
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "$racha / 7",
+                    text     = "$racha / 7",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
-                        .width(80.dp)
-                        .height(6.dp)
+                        .width(80.dp).height(6.dp)
                         .clip(RoundedCornerShape(3.dp))
                         .background(colorRacha.copy(alpha = 0.15f))
                 ) {
@@ -453,128 +617,6 @@ private fun RachaCard(racha: Int) {
     }
 }
 
-// ── Selector de mes con chips horizontales ─────────────────────────────────────
-@Composable
-private fun SelectorMes(
-    meses: List<String>,
-    seleccionado: String,
-    onSeleccionar: (String) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        meses.forEach { clave ->
-            val activo = clave == seleccionado
-            val etiqueta = if (clave == "Todos") "Todos" else nombreMes(clave)
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = if (activo) VerdeSalvia else Color.White.copy(alpha = 0.85f),
-                border = if (activo) null
-                else BorderStroke(1.dp, VerdeSalvia.copy(alpha = 0.35f)),
-                modifier = Modifier.clickable { onSeleccionar(clave) }
-            ) {
-                Text(
-                    text = etiqueta,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-                    fontSize = 13.sp,
-                    fontWeight = if (activo) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (activo) Color.White else VerdeSalvia
-                )
-            }
-        }
-    }
-}
-
-// ── Grafica de barras ──────────────────────────────────────────────────────────
-@Composable
-fun GraficaBarras(sesiones: List<SesionEstres>) {
-    if (sesiones.isEmpty()) return
-
-    Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(210.dp)
-    ) {
-        val n             = sesiones.size
-        val maxValor      = 10f
-        val altoUtil      = size.height * 0.60f
-        val baseY         = size.height * 0.75f
-        val anchoGrupo    = size.width / n
-        val anchoBarraPar = anchoGrupo * 0.30f
-        val separacion    = anchoGrupo * 0.05f
-
-        sesiones.forEachIndexed { i, sesion ->
-            val centroX  = anchoGrupo * i + anchoGrupo / 2f
-            val xAntes   = centroX - anchoBarraPar - separacion / 2f
-            val xDespues = centroX + separacion / 2f
-
-            val altoAntes   = (sesion.estresAntes   / maxValor) * altoUtil
-            val altoDespues = (sesion.estresDespues / maxValor) * altoUtil
-            val radio = 8f
-
-            drawRoundRect(
-                color = ColorAntes.copy(alpha = 0.85f),
-                topLeft = Offset(xAntes, baseY - altoAntes),
-                size = Size(anchoBarraPar, altoAntes),
-                cornerRadius = CornerRadius(radio, radio)
-            )
-            drawRoundRect(
-                color = ColorDespues.copy(alpha = 0.85f),
-                topLeft = Offset(xDespues, baseY - altoDespues),
-                size = Size(anchoBarraPar, altoDespues),
-                cornerRadius = CornerRadius(radio, radio)
-            )
-
-            // Numero encima barra Antes
-            drawContext.canvas.nativeCanvas.apply {
-                val p = android.graphics.Paint().apply {
-                    color = android.graphics.Color.parseColor("#4CAF50")
-                    textSize = 28f
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    isFakeBoldText = true
-                }
-                drawText(sesion.estresAntes.toString(), xAntes + anchoBarraPar / 2f, baseY - altoAntes - 8f, p)
-            }
-
-            // Numero encima barra Despues
-            drawContext.canvas.nativeCanvas.apply {
-                val p = android.graphics.Paint().apply {
-                    color = android.graphics.Color.parseColor("#F44336")
-                    textSize = 28f
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    isFakeBoldText = true
-                }
-                drawText(sesion.estresDespues.toString(), xDespues + anchoBarraPar / 2f, baseY - altoDespues - 8f, p)
-            }
-        }
-
-        // Linea base
-        drawLine(
-            color = Color.LightGray.copy(alpha = 0.6f),
-            start = Offset(0f, baseY),
-            end   = Offset(size.width, baseY),
-            strokeWidth = 1.5f
-        )
-
-        // Fechas bajo la linea base
-        sesiones.forEachIndexed { i, sesion ->
-            val centroX    = anchoGrupo * i + anchoGrupo / 2f
-            val fechaCorta = if (sesion.fecha.length >= 5) sesion.fecha.substring(0, 5) else sesion.fecha
-            drawContext.canvas.nativeCanvas.apply {
-                val p = android.graphics.Paint().apply {
-                    color = android.graphics.Color.parseColor("#888888")
-                    textSize = 22f
-                    textAlign = android.graphics.Paint.Align.CENTER
-                }
-                drawText(fechaCorta, centroX, baseY + 36f, p)
-            }
-        }
-    }
-}
-
 // ── Chip de resumen ────────────────────────────────────────────────────────────
 @Composable
 private fun ResumenChip(
@@ -584,27 +626,24 @@ private fun ResumenChip(
     color: Color
 ) {
     Card(
-        modifier = modifier
-            .border(1.dp, color.copy(alpha = 0.25f), RoundedCornerShape(14.dp)),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.85f)),
+        modifier  = modifier.border(1.dp, color.copy(alpha = 0.25f), RoundedCornerShape(14.dp)),
+        shape     = RoundedCornerShape(14.dp),
+        colors    = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.85f)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier              = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp),
+            horizontalAlignment   = Alignment.CenterHorizontally
         ) {
             Box(modifier = Modifier.size(6.dp).background(color, CircleShape))
             Spacer(modifier = Modifier.height(6.dp))
-            Text(text = valor, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
+            Text(text = valor,    fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = etiqueta,
-                fontSize = 10.sp,
+                text      = etiqueta,
+                fontSize  = 10.sp,
                 lineHeight = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color     = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
@@ -627,12 +666,12 @@ fun TarjetaSesion(sesion: SesionEstres) {
                 color = if (mejoro) ColorAntes.copy(alpha = 0.25f) else ColorDespues.copy(alpha = 0.20f),
                 shape = RoundedCornerShape(16.dp)
             ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+        shape     = RoundedCornerShape(16.dp),
+        colors    = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier          = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -651,19 +690,23 @@ fun TarjetaSesion(sesion: SesionEstres) {
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = sesion.juego, fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface)
-                Text(text = sesion.fecha, fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text       = sesion.juego,
+                    fontSize   = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color      = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text     = sesion.fecha,
+                    fontSize = 12.sp,
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "${sesion.estresAntes}", fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold, color = colorAntes)
-                Text(text = " > ", fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(text = "${sesion.estresDespues}", fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold, color = colorDespues)
+                Text(text = "${sesion.estresAntes}",   fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colorAntes)
+                Text(text = " > ",                     fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "${sesion.estresDespues}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colorDespues)
                 Spacer(modifier = Modifier.width(8.dp))
                 Box(
                     modifier = Modifier
@@ -676,10 +719,10 @@ fun TarjetaSesion(sesion: SesionEstres) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (mejoro) "-" else "+",
-                        fontSize = 14.sp,
+                        text       = if (mejoro) "-" else "+",
+                        fontSize   = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (mejoro) ColorAntes else ColorDespues
+                        color      = if (mejoro) ColorAntes else ColorDespues
                     )
                 }
             }
@@ -687,7 +730,7 @@ fun TarjetaSesion(sesion: SesionEstres) {
     }
 }
 
-// ── Leyenda de la grafica ──────────────────────────────────────────────────────
+// ── Leyenda de punto ───────────────────────────────────────────────────────────
 @Composable
 fun LeyendaPunto(color: Color, texto: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -695,6 +738,107 @@ fun LeyendaPunto(color: Color, texto: String) {
             drawCircle(color = color, radius = size.minDimension / 2)
         }
         Spacer(modifier = Modifier.width(4.dp))
-        Text(text = texto, fontSize = 12.sp, color = Color.Gray)
+        Text(text = texto, fontSize = 11.sp, color = Color.Gray)
+    }
+}
+
+// ── Grafica de barras con líneas de media ──────────────────────────────────────
+@Composable
+fun GraficaBarras(sesiones: List<SesionEstres>) {
+    if (sesiones.isEmpty()) return
+
+    Canvas(
+        modifier = Modifier
+            .width((sesiones.size * 70).dp) // 👈 ESTA ES LA CLAVE
+            .height(220.dp)
+    ) {
+        val n = sesiones.size
+        val maxValor = 10f
+
+        // ✅ Zonas bien definidas (CLAVE)
+        val topArea = 50f       // espacio para números
+        val bottomArea = 50f    // espacio para fechas
+        val chartHeight = size.height - topArea - bottomArea
+        val baseY = topArea + chartHeight
+
+        val groupWidth = size.width / n
+        val barWidth = groupWidth * 0.25f
+        val spaceBetween = groupWidth * 0.1f
+
+        sesiones.forEachIndexed { i, sesion ->
+
+            val centerX = groupWidth * i + groupWidth / 2f
+
+            val xAntes = centerX - barWidth - spaceBetween / 2
+            val xDespues = centerX + spaceBetween / 2
+
+            val hAntes = (sesion.estresAntes / maxValor) * chartHeight
+            val hDespues = (sesion.estresDespues / maxValor) * chartHeight
+
+            val yAntes = baseY - hAntes
+            val yDespues = baseY - hDespues
+
+            // 🟩 Barras
+            drawRoundRect(
+                color = ColorAntes,
+                topLeft = Offset(xAntes, yAntes),
+                size = Size(barWidth, hAntes),
+                cornerRadius = CornerRadius(10f, 10f)
+            )
+
+            drawRoundRect(
+                color = ColorDespues,
+                topLeft = Offset(xDespues, yDespues),
+                size = Size(barWidth, hDespues),
+                cornerRadius = CornerRadius(10f, 10f)
+            )
+
+            // 🔢 TEXTO ARRIBA (siempre visible)
+            val paintAntes = android.graphics.Paint().apply {
+                color = android.graphics.Color.parseColor("#E53935")
+                textSize = 26f
+                textAlign = android.graphics.Paint.Align.CENTER
+                isFakeBoldText = true
+            }
+
+            val paintDespues = android.graphics.Paint().apply {
+                color = android.graphics.Color.parseColor("#43A047")
+                textSize = 26f
+                textAlign = android.graphics.Paint.Align.CENTER
+                isFakeBoldText = true
+            }
+
+            drawContext.canvas.nativeCanvas.drawText(
+                sesion.estresAntes.toString(),
+                xAntes + barWidth / 2,
+                yAntes - 10f, // 👈 SIEMPRE separado
+                paintAntes
+            )
+
+            drawContext.canvas.nativeCanvas.drawText(
+                sesion.estresDespues.toString(),
+                xDespues + barWidth / 2,
+                yDespues - 10f,
+                paintDespues
+            )
+
+            // 📅 FECHA ABAJO
+            val paintFecha = android.graphics.Paint().apply {
+                color = android.graphics.Color.parseColor("#888888")
+                textSize = 22f
+                textAlign = android.graphics.Paint.Align.CENTER
+            }
+
+            val fechaCorta =
+                if (sesion.fecha.length >= 5) sesion.fecha.substring(0, 5)
+                else sesion.fecha
+
+            drawContext.canvas.nativeCanvas.drawText(
+                fechaCorta,
+                centerX,
+                baseY + 30f,
+                paintFecha
+            )
+        }
     }
 }
