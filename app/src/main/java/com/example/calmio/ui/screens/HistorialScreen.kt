@@ -54,7 +54,7 @@ private val emojiPorJuego = mapOf(
 private const val SESIONES_INICIALES = 5
 private const val SESIONES_MAXIMO    = 15
 
-// Nombres de meses en español
+// Nombres de meses
 private val NOMBRES_MESES = listOf(
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
@@ -82,7 +82,7 @@ private fun clavesMesActual(): String {
     return "$mes/$anio"
 }
 
-// Calcula racha de dias consecutivos jugados (fecha "dd/MM/yyyy")
+// Calcula la racha de dias consecutivos jugados (fecha "dd/MM/yyyy")
 private fun calcularRacha(sesiones: List<SesionEstres>): Int {
     if (sesiones.isEmpty()) return 0
     val formatter = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
@@ -225,7 +225,6 @@ fun HistorialScreen(
                             ) {
                                 ResumenChip(
                                     modifier  = Modifier.weight(1f),
-                                    // CAMBIO: etiqueta más descriptiva
                                     etiqueta  = "Estrés al entrar",
                                     valor     = "%.1f".format(promedioAntes),
                                     color     = ColorAntes
@@ -238,7 +237,6 @@ fun HistorialScreen(
                                 )
                                 ResumenChip(
                                     modifier  = Modifier.weight(1f),
-                                    // CAMBIO: etiqueta más clara para usuarios externos
                                     etiqueta  = "Sesiones que te relajaron",
                                     valor     = "$positivas",
                                     color     = VerdeSalvia
@@ -250,7 +248,7 @@ fun HistorialScreen(
                     Spacer(modifier = Modifier.height(20.dp))
                 }
 
-                // ── Selector de mes — CAMBIO: dropdown en lugar de chips ──────
+                // ── Selector de mes — Añadido dropdown en lugar de chips para que sea más estético ──────
                 item {
                     AnimatedVisibility(
                         visible = visible,
@@ -269,7 +267,7 @@ fun HistorialScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // ── Grafica de barras — CAMBIO: incluye líneas de media ───────
+                // ── Grafica de barras  ──
                 item {
                     AnimatedVisibility(
                         visible = visible,
@@ -284,7 +282,6 @@ fun HistorialScreen(
                             elevation = CardDefaults.cardElevation(0.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                // Título con nombre del mes seleccionado
                                 val tituloGrafica = if (mesFiltro == "Todos") "Todas las sesiones"
                                 else nombreMes(mesFiltro)
                                 Text(
@@ -316,7 +313,7 @@ fun HistorialScreen(
                                         )
                                     }
                                 } else {
-                                    // CAMBIO: pasa todas las sesiones del mes, sin límite de 8
+                                    // Añadido un scroll horizontal para que no se junten las fechas
                                     Box(
                                         modifier = Modifier
                                             .horizontalScroll(rememberScrollState())
@@ -325,7 +322,7 @@ fun HistorialScreen(
                                     }
                                 }
 
-                                // CAMBIO: bloque de medias del mes
+                                // Bloque de medias del mes
                                 if (sesionesFiltradas.isNotEmpty()) {
                                     val mediaAntes   = sesionesFiltradas.map { it.estresAntes }.average()
                                     val mediaDespues = sesionesFiltradas.map { it.estresDespues }.average()
@@ -425,7 +422,7 @@ fun HistorialScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CAMBIO: Selector de mes como dropdown en lugar de chips horizontales
+// Selector de mes con dropdown
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun SelectorMesDropdown(
@@ -511,32 +508,13 @@ private fun SelectorMesDropdown(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CAMBIO: Badge de media debajo del gráfico
+// Badge de media debajo del gráfico
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun MediaBadge(label: String, valor: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = valor, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = color)
         Text(text = label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CAMBIO: Leyenda de línea discontinua para las medias
-// ─────────────────────────────────────────────────────────────────────────────
-@Composable
-fun LeyendaLinea(color: Color, texto: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Canvas(modifier = Modifier.size(width = 16.dp, height = 2.dp)) {
-            drawLine(
-                color       = color,
-                start       = Offset(0f, size.height / 2),
-                end         = Offset(size.width, size.height / 2),
-                strokeWidth = 4f
-            )
-        }
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(text = texto, fontSize = 11.sp, color = Color.Gray)
     }
 }
 
@@ -742,22 +720,20 @@ fun LeyendaPunto(color: Color, texto: String) {
     }
 }
 
-// ── Grafica de barras con líneas de media ──────────────────────────────────────
+// ── Grafica de barras  ──────────────────────────────────────
 @Composable
 fun GraficaBarras(sesiones: List<SesionEstres>) {
     if (sesiones.isEmpty()) return
 
     Canvas(
         modifier = Modifier
-            .width((sesiones.size * 70).dp) // 👈 ESTA ES LA CLAVE
+            .width((sesiones.size * 70).dp)
             .height(220.dp)
     ) {
         val n = sesiones.size
         val maxValor = 10f
-
-        // ✅ Zonas bien definidas (CLAVE)
-        val topArea = 50f       // espacio para números
-        val bottomArea = 50f    // espacio para fechas
+        val topArea = 50f
+        val bottomArea = 50f
         val chartHeight = size.height - topArea - bottomArea
         val baseY = topArea + chartHeight
 
@@ -793,7 +769,6 @@ fun GraficaBarras(sesiones: List<SesionEstres>) {
                 cornerRadius = CornerRadius(10f, 10f)
             )
 
-            // 🔢 TEXTO ARRIBA (siempre visible)
             val paintAntes = android.graphics.Paint().apply {
                 color = android.graphics.Color.parseColor("#E53935")
                 textSize = 26f
@@ -811,7 +786,7 @@ fun GraficaBarras(sesiones: List<SesionEstres>) {
             drawContext.canvas.nativeCanvas.drawText(
                 sesion.estresAntes.toString(),
                 xAntes + barWidth / 2,
-                yAntes - 10f, // 👈 SIEMPRE separado
+                yAntes - 10f, //
                 paintAntes
             )
 
@@ -822,7 +797,6 @@ fun GraficaBarras(sesiones: List<SesionEstres>) {
                 paintDespues
             )
 
-            // 📅 FECHA ABAJO
             val paintFecha = android.graphics.Paint().apply {
                 color = android.graphics.Color.parseColor("#888888")
                 textSize = 22f
