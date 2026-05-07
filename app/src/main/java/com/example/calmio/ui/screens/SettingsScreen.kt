@@ -1,7 +1,6 @@
 package com.example.calmio.ui.screens
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -22,7 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.calmio.ui.theme.*
 import com.example.calmio.viewmodel.SettingsViewModel
 
-// ─── Avatares predeterminados (emoji + color de fondo) ──────────────────────
+// ─── Avatares predeterminados ────────────────────────────────────────────────
 data class AvatarOption(val emoji: String, val background: Color)
 
 val AVATARS = listOf(
@@ -48,18 +47,19 @@ fun SettingsScreen(
     val darkMode            by settingsViewModel.darkMode.collectAsState()
     val notificaciones      by settingsViewModel.notificationsEnabled.collectAsState()
     val avatarIndex         by settingsViewModel.avatarIndex.collectAsState()
+    val reminderHour        by settingsViewModel.reminderHour.collectAsState()
+    val reminderMinute      by settingsViewModel.reminderMinute.collectAsState()
 
-    var mostrarDialogoCerrar  by remember { mutableStateOf(false) }
-    var mostrarDialogoBorrar  by remember { mutableStateOf(false) }
-    var mostrarSelectorAvatar by remember { mutableStateOf(false) }
+    var mostrarDialogoCerrar   by remember { mutableStateOf(false) }
+    var mostrarDialogoBorrar   by remember { mutableStateOf(false) }
+    var mostrarSelectorAvatar  by remember { mutableStateOf(false) }
+    var mostrarTimePicker      by remember { mutableStateOf(false) }
 
     // ── Diálogo: Cerrar sesión ───────────────────────────────────────────────
     if (mostrarDialogoCerrar) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoCerrar = false },
-            icon = {
-                Icon(Icons.Filled.ExitToApp, contentDescription = null, tint = Terracota)
-            },
+            icon  = { Icon(Icons.Filled.ExitToApp, contentDescription = null, tint = Terracota) },
             title = { Text("Cerrar sesión", fontWeight = FontWeight.Bold) },
             text  = { Text("¿Seguro que quieres salir de tu cuenta?") },
             confirmButton = {
@@ -78,9 +78,7 @@ fun SettingsScreen(
     if (mostrarDialogoBorrar) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoBorrar = false },
-            icon = {
-                Icon(Icons.Filled.DeleteForever, contentDescription = null, tint = Error)
-            },
+            icon  = { Icon(Icons.Filled.DeleteForever, contentDescription = null, tint = Error) },
             title = { Text("Borrar cuenta", fontWeight = FontWeight.Bold) },
             text  = {
                 Text(
@@ -96,6 +94,63 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { mostrarDialogoBorrar = false }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    // ── Diálogo: TimePicker ──────────────────────────────────────────────────
+    if (mostrarTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour   = reminderHour,
+            initialMinute = reminderMinute,
+            is24Hour      = true
+        )
+        AlertDialog(
+            onDismissRequest = { mostrarTimePicker = false },
+            title = {
+                Text(
+                    "Hora del recordatorio",
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 18.sp
+                )
+            },
+            text = {
+                Column(
+                    modifier            = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(Modifier.height(8.dp))
+                    TimePicker(
+                        state  = timePickerState,
+                        colors = TimePickerDefaults.colors(
+                            clockDialColor          = if (darkMode) Color(0xFF2C2C2C) else Color(0xFFF0EBE3),
+                            selectorColor           = VerdeSalvia,
+                            containerColor          = Color.Transparent,
+                            periodSelectorBorderColor = VerdeSalvia,
+                            timeSelectorSelectedContainerColor   = VerdeSalvia,
+                            timeSelectorUnselectedContainerColor = if (darkMode) Color(0xFF2C2C2C) else Color(0xFFF0EBE3),
+                            timeSelectorSelectedContentColor     = Color.White,
+                            timeSelectorUnselectedContentColor   = if (darkMode) Color.White else TextoPrincipal,
+                            clockDialSelectedContentColor        = Color.White,
+                            clockDialUnselectedContentColor      = if (darkMode) Color.White else TextoPrincipal,
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        settingsViewModel.setReminderTime(
+                            timePickerState.hour,
+                            timePickerState.minute
+                        )
+                        mostrarTimePicker = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = VerdeSalvia)
+                ) { Text("Guardar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarTimePicker = false }) { Text("Cancelar") }
             }
         )
     }
@@ -120,10 +175,10 @@ fun SettingsScreen(
                     modifier   = Modifier.padding(bottom = 20.dp)
                 )
                 LazyVerticalGrid(
-                    columns      = GridCells.Fixed(3),
+                    columns               = GridCells.Fixed(3),
                     verticalArrangement   = Arrangement.spacedBy(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier     = Modifier.height(220.dp)
+                    modifier              = Modifier.height(220.dp)
                 ) {
                     itemsIndexed(AVATARS) { index, avatar ->
                         val selected = index == avatarIndex
@@ -190,7 +245,6 @@ fun SettingsScreen(
 
             // ── Sección: Perfil ──────────────────────────────────────────────
             SettingsSection(title = "Perfil", darkMode = darkMode) {
-                // Avatar grande + botón de cambio
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -218,11 +272,7 @@ fun SettingsScreen(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(Modifier.width(4.dp))
-                            Text(
-                                "Cambiar avatar",
-                                color    = VerdeSalvia,
-                                fontSize = 13.sp
-                            )
+                            Text("Cambiar avatar", color = VerdeSalvia, fontSize = 13.sp)
                         }
                     }
                 }
@@ -231,27 +281,92 @@ fun SettingsScreen(
             // ── Sección: Apariencia ──────────────────────────────────────────
             SettingsSection(title = "Apariencia", darkMode = darkMode) {
                 SettingsToggleRow(
-                    icon       = if (darkMode) Icons.Filled.DarkMode else Icons.Outlined.LightMode,
-                    iconTint   = if (darkMode) Color(0xFF8B7EC8) else Terracota,
-                    title      = "Modo oscuro",
-                    subtitle   = if (darkMode) "Tema oscuro activado" else "Tema claro activado",
-                    checked    = darkMode,
-                    onChecked  = { settingsViewModel.setDarkMode(it) },
-                    darkMode   = darkMode
+                    icon      = if (darkMode) Icons.Filled.DarkMode else Icons.Outlined.LightMode,
+                    iconTint  = if (darkMode) Color(0xFF8B7EC8) else Terracota,
+                    title     = "Modo oscuro",
+                    subtitle  = if (darkMode) "Tema oscuro activado" else "Tema claro activado",
+                    checked   = darkMode,
+                    onChecked = { settingsViewModel.setDarkMode(it) },
+                    darkMode  = darkMode
                 )
             }
 
             // ── Sección: Notificaciones ──────────────────────────────────────
             SettingsSection(title = "Notificaciones", darkMode = darkMode) {
+
+                // Toggle de activar/desactivar
                 SettingsToggleRow(
                     icon      = if (notificaciones) Icons.Filled.Notifications else Icons.Filled.NotificationsOff,
                     iconTint  = if (notificaciones) VerdeSalvia else TextoSuave,
                     title     = "Recordatorio diario",
-                    subtitle  = if (notificaciones) "Te avisaremos para que juegues" else "Sin notificaciones",
+                    subtitle  = if (notificaciones) "Activado" else "Desactivado",
                     checked   = notificaciones,
                     onChecked = { settingsViewModel.setNotifications(it) },
                     darkMode  = darkMode
                 )
+
+                // Selector de hora — solo visible cuando las notificaciones están ON
+                AnimatedVisibility(
+                    visible = notificaciones,
+                    enter   = expandVertically() + fadeIn(),
+                    exit    = shrinkVertically() + fadeOut()
+                ) {
+                    Column {
+                        HorizontalDivider(
+                            color    = if (darkMode) Color(0xFF2C2C2C) else Color(0xFFEAE5DF),
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { mostrarTimePicker = true }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(VerdeSalvia.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Filled.Schedule,
+                                    contentDescription = null,
+                                    tint     = VerdeSalvia,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(14.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Hora del recordatorio",
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize   = 15.sp,
+                                    color      = if (darkMode) Color.White else TextoPrincipal
+                                )
+                                Text(
+                                    "Toca para cambiar la hora",
+                                    fontSize = 12.sp,
+                                    color    = if (darkMode) Color(0xFF8C8C8C) else TextoSuave
+                                )
+                            }
+                            // Chip con la hora actual
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = VerdeSalvia.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text     = "%02d:%02d".format(reminderHour, reminderMinute),
+                                    color    = VerdeSalvia,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             // ── Sección: Información ─────────────────────────────────────────
@@ -268,11 +383,11 @@ fun SettingsScreen(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 SettingsInfoRow(
-                    icon     = Icons.Filled.Shield,
-                    iconTint = VerdeSalvia,
-                    title    = "Política de privacidad",
-                    value    = "",
-                    darkMode = darkMode,
+                    icon      = Icons.Filled.Shield,
+                    iconTint  = VerdeSalvia,
+                    title     = "Política de privacidad",
+                    value     = "",
+                    darkMode  = darkMode,
                     clickable = true
                 )
                 HorizontalDivider(
@@ -291,7 +406,6 @@ fun SettingsScreen(
 
             // ── Sección: Cuenta ──────────────────────────────────────────────
             SettingsSection(title = "Cuenta", darkMode = darkMode) {
-                // Cerrar sesión
                 SettingsActionRow(
                     icon     = Icons.Filled.ExitToApp,
                     iconTint = Terracota,
@@ -304,7 +418,6 @@ fun SettingsScreen(
                     color    = if (darkMode) Color(0xFF2C2C2C) else Color(0xFFEAE5DF),
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
-                // Borrar cuenta
                 SettingsActionRow(
                     icon     = Icons.Filled.DeleteForever,
                     iconTint = Error,
@@ -320,7 +433,7 @@ fun SettingsScreen(
     }
 }
 
-// ─── Componentes internos ────────────────────────────────────────────────────
+// ─── Componentes reutilizables ───────────────────────────────────────────────
 
 @Composable
 private fun SettingsSection(
@@ -330,17 +443,17 @@ private fun SettingsSection(
 ) {
     Column {
         Text(
-            text     = title.uppercase(),
-            fontSize = 11.sp,
-            fontWeight  = FontWeight.SemiBold,
-            color    = if (darkMode) Color(0xFF8C8C8C) else TextoSuave,
+            text          = title.uppercase(),
+            fontSize      = 11.sp,
+            fontWeight    = FontWeight.SemiBold,
+            color         = if (darkMode) Color(0xFF8C8C8C) else TextoSuave,
             letterSpacing = 1.sp,
-            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            modifier      = Modifier.padding(start = 4.dp, bottom = 8.dp)
         )
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape    = RoundedCornerShape(18.dp),
-            colors   = CardDefaults.cardColors(
+            modifier  = Modifier.fillMaxWidth(),
+            shape     = RoundedCornerShape(18.dp),
+            colors    = CardDefaults.cardColors(
                 containerColor = if (darkMode) Color(0xFF1E1E1E) else Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -361,13 +474,13 @@ private fun SettingsToggleRow(
     darkMode: Boolean
 ) {
     Row(
-        modifier = Modifier
+        modifier          = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier
+            modifier         = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(iconTint.copy(alpha = 0.12f)),
@@ -383,11 +496,7 @@ private fun SettingsToggleRow(
                 fontSize   = 15.sp,
                 color      = if (darkMode) Color.White else TextoPrincipal
             )
-            Text(
-                subtitle,
-                fontSize = 12.sp,
-                color    = if (darkMode) Color(0xFF8C8C8C) else TextoSuave
-            )
+            Text(subtitle, fontSize = 12.sp, color = if (darkMode) Color(0xFF8C8C8C) else TextoSuave)
         }
         Switch(
             checked         = checked,
@@ -412,14 +521,14 @@ private fun SettingsInfoRow(
     clickable: Boolean = false
 ) {
     Row(
-        modifier = Modifier
+        modifier          = Modifier
             .fillMaxWidth()
             .then(if (clickable) Modifier.clickable { } else Modifier)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier
+            modifier         = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(iconTint.copy(alpha = 0.12f)),
@@ -458,14 +567,14 @@ private fun SettingsActionRow(
     onClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier          = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier
+            modifier         = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(iconTint.copy(alpha = 0.12f)),
@@ -474,11 +583,6 @@ private fun SettingsActionRow(
             Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
         }
         Spacer(Modifier.width(14.dp))
-        Text(
-            title,
-            fontWeight = FontWeight.Medium,
-            fontSize   = 15.sp,
-            color      = color
-        )
+        Text(title, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = color)
     }
 }
