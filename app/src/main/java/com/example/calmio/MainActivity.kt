@@ -5,61 +5,60 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.calmio.ui.screens.*
 import com.example.calmio.ui.theme.CalmioTheme
-import com.example.calmio.viewmodel.DiarioViewModel
-import com.example.calmio.viewmodel.StressViewModel
-import kotlinx.coroutines.launch
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.calmio.ui.theme.Crema
 import com.example.calmio.ui.theme.VerdeSalvia
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.dp
-import com.example.calmio.ui.theme.VerdeMenta
+import com.example.calmio.viewmodel.DiarioViewModel
+import com.example.calmio.viewmodel.SettingsViewModel
+import com.example.calmio.viewmodel.StressViewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CalmioTheme {
-                CalmioApp()
+            // SettingsViewModel a nivel de Activity para que el tema persista
+            val settingsViewModel: SettingsViewModel = viewModel()
+            val darkMode by settingsViewModel.darkMode.collectAsState()
+
+            CalmioTheme(darkTheme = darkMode) {
+                CalmioApp(settingsViewModel = settingsViewModel)
             }
         }
     }
 }
 
 @Composable
-fun CalmioApp() {
+fun CalmioApp(settingsViewModel: SettingsViewModel) {
     val navController   = rememberNavController()
     val stressViewModel: StressViewModel = viewModel()
     val diarioViewModel: DiarioViewModel = viewModel()
 
-    var estresAntes  by remember { mutableStateOf(0) }
-    var juegoActual  by remember { mutableStateOf("") }
+    var estresAntes by remember { mutableStateOf(0) }
+    var juegoActual by remember { mutableStateOf("") }
 
     NavHost(navController = navController, startDestination = "login") {
 
@@ -98,9 +97,10 @@ fun CalmioApp() {
 
         composable("main") {
             MainScreen(
-                stressViewModel     = stressViewModel,
-                diarioViewModel     = diarioViewModel,
-                onJuegoSeleccionado = { juego ->
+                stressViewModel      = stressViewModel,
+                diarioViewModel      = diarioViewModel,
+                settingsViewModel    = settingsViewModel,
+                onJuegoSeleccionado  = { juego ->
                     juegoActual = juego
                     navController.navigate(juego)
                 },
@@ -111,7 +111,28 @@ fun CalmioApp() {
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onAbrirAjustes = {
+                    navController.navigate("settings")
                 }
+            )
+        }
+
+        composable("settings") {
+            SettingsScreen(
+                onCerrarSesion = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onBorrarCuenta = {
+                    // Aquí irá la lógica de borrado cuando implemente auth real
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onVolver          = { navController.popBackStack() },
+                settingsViewModel = settingsViewModel
             )
         }
 
@@ -186,18 +207,24 @@ fun CalmioApp() {
 fun MainScreen(
     stressViewModel: StressViewModel,
     diarioViewModel: DiarioViewModel,
+    settingsViewModel: SettingsViewModel,
     onJuegoSeleccionado: (String) -> Unit,
     onVerHistorialDiario: () -> Unit,
-    onCerrarSesion: () -> Unit
+    onCerrarSesion: () -> Unit,
+    onAbrirAjustes: () -> Unit
 ) {
     var tabSeleccionada by remember { mutableStateOf(0) }
-    var menuExpandido   by remember { mutableStateOf(false) }
-
-    // ── CAMBIO 1: recoge el mapa de partidas como estado ──────────────────
     val partidasPorJuego by stressViewModel.partidasPorJuego.collectAsState()
+    val darkMode by settingsViewModel.darkMode.collectAsState()
+    val avatarIndex by settingsViewModel.avatarIndex.collectAsState()
+
+    val bgColor = if (darkMode)
+        MaterialTheme.colorScheme.background
+    else
+        Crema
 
     Scaffold(
-        containerColor = Crema,
+        containerColor = bgColor,
         topBar = {
             TopAppBar(
                 title = {
@@ -209,35 +236,13 @@ fun MainScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { menuExpandido = true }) {
-                        Icon(
-                            imageVector        = Icons.Filled.AccountCircle,
-                            contentDescription = "Menú",
-                            tint               = VerdeSalvia
-                        )
-                    }
-                    DropdownMenu(
-                        expanded         = menuExpandido,
-                        onDismissRequest = { menuExpandido = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector        = Icons.Filled.ExitToApp,
-                                        contentDescription = null,
-                                        tint               = MaterialTheme.colorScheme.error,
-                                        modifier           = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Cerrar sesión", color = MaterialTheme.colorScheme.error)
-                                }
-                            },
-                            onClick = { menuExpandido = false; onCerrarSesion() }
-                        )
+                    // Muestra el emoji del avatar seleccionado
+                    val avatar = AVATARS[avatarIndex]
+                    IconButton(onClick = onAbrirAjustes) {
+                        Text(avatar.emoji, fontSize = 22.sp)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Crema)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = bgColor)
             )
         },
         bottomBar = {
@@ -264,7 +269,6 @@ fun MainScreen(
         }
     ) { paddingValues ->
         when (tabSeleccionada) {
-            // ── CAMBIO 2: pasa partidasPorJuego a GameSelectionScreen ─────
             0 -> GameSelectionScreen(
                 modifier            = Modifier.padding(paddingValues),
                 partidasPorJuego    = partidasPorJuego,
