@@ -182,15 +182,6 @@ fun StressScreen(
     }
 }
 
-@Composable
-fun colorSegunEstres(nivel: Int): Color {
-    return when {
-        nivel <= 3 -> Color(0xFF4CAF50)
-        nivel <= 6 -> Color(0xFFFF9800)
-        else -> Color(0xFFF44336)
-    }
-}
-
 fun nivelTexto(nivel: Int): String {
     return when (nivel) {
         1, 2 -> "Muy relajado 😌"
