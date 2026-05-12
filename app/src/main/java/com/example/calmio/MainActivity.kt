@@ -40,7 +40,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            // SettingsViewModel a nivel de Activity para que el tema persista
             val settingsViewModel: SettingsViewModel = viewModel()
             val darkMode by settingsViewModel.darkMode.collectAsState()
 
@@ -62,9 +61,27 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
 
     NavHost(navController = navController, startDestination = "login") {
 
+        // ── Auth ────────────────────────────────────────────────────────────
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
+                    navController.navigate("stress_antes") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onRegisterClick = {
+                    navController.navigate("register")
+                },
+                onForgotPassword = {
+                    navController.navigate("forgot_password")
+                }
+            )
+        }
+
+        composable("register") {
+            RegisterScreen(
+                onBack = { navController.popBackStack() },
+                onRegisterSuccess = {
                     navController.navigate("stress_antes") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -72,6 +89,13 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
             )
         }
 
+        composable("forgot_password") {
+            ForgotPasswordScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── App ─────────────────────────────────────────────────────────────
         composable("stress_antes") {
             val scope = rememberCoroutineScope()
             LaunchedEffect(Unit) {
@@ -126,7 +150,6 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                     }
                 },
                 onBorrarCuenta = {
-                    // Aquí irá la lógica de borrado cuando implemente auth real
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
@@ -152,6 +175,7 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                 }
             })
         }
+
         composable("mochis") {
             val scope = rememberCoroutineScope()
             MochisScreen(onVolver = {
@@ -161,6 +185,7 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                 }
             })
         }
+
         composable("pesca") {
             val scope = rememberCoroutineScope()
             PescaScreen(onVolver = {
@@ -170,6 +195,7 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                 }
             })
         }
+
         composable("respiracion") {
             val scope = rememberCoroutineScope()
             BreathingGameScreen(
@@ -236,7 +262,6 @@ fun MainScreen(
                     )
                 },
                 actions = {
-                    // Muestra el emoji del avatar seleccionado
                     val avatar = AVATARS[avatarIndex]
                     IconButton(onClick = onAbrirAjustes) {
                         Text(avatar.emoji, fontSize = 22.sp)
