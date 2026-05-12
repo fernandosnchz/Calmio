@@ -36,11 +36,13 @@ import com.example.calmio.viewmodel.LoginViewModel
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit = {},
+    onForgotPassword: () -> Unit = {}, // ← añadido
     loginViewModel: LoginViewModel = viewModel()
 ) {
     val email by loginViewModel.email.collectAsState()
     val password by loginViewModel.password.collectAsState()
     val errorMessage by loginViewModel.errorMessage.collectAsState()
+    val isLoading by loginViewModel.isLoading.collectAsState() // ← añadido
     var passwordVisible by remember { mutableStateOf(false) }
 
     Box(
@@ -165,7 +167,7 @@ fun LoginScreen(
                         )
                     }
 
-                    // ¿Olvidaste tu contraseña?
+                    // ¿Olvidaste tu contraseña? ← conectado
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -177,7 +179,7 @@ fun LoginScreen(
                             fontSize = 12.sp,
                             color = Terracota,
                             fontWeight = FontWeight.Medium,
-                            modifier = Modifier.clickable { /* navegar */ }
+                            modifier = Modifier.clickable { onForgotPassword() } // ← conectado
                         )
                     }
 
@@ -194,6 +196,7 @@ fun LoginScreen(
                     // Botón principal
                     Button(
                         onClick = { loginViewModel.onLoginClick(onLoginSuccess) },
+                        enabled = !isLoading, // ← añadido
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(54.dp),
@@ -203,12 +206,20 @@ fun LoginScreen(
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text(
-                            "Entrar",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            letterSpacing = 0.2.sp
-                        )
+                        // Muestra spinner mientras carga ← añadido
+                        if (isLoading)
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        else
+                            Text(
+                                "Entrar",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 0.2.sp
+                            )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -283,7 +294,7 @@ fun LoginScreen(
 
 // Componente helper para label + field
 @Composable
-private fun LabeledField(
+fun LabeledField(
     label: String,
     content: @Composable () -> Unit
 ) {
