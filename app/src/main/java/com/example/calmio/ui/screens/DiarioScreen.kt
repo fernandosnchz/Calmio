@@ -26,9 +26,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.calmio.data.SesionEstres
 import com.example.calmio.ui.theme.*
 import com.example.calmio.viewmodel.DiarioViewModel
+import com.example.calmio.viewmodel.SesionEstresMemoria
 import com.example.calmio.viewmodel.StressViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,8 +40,8 @@ fun DiarioScreen(
     onVerHistorial: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val sesiones        by stressViewModel.todasLasSesiones.collectAsStateWithLifecycle()
-    val entradasDeHoy  by diarioViewModel.entradasDeHoy.collectAsStateWithLifecycle(emptyList())
+    val sesiones       by stressViewModel.todasLasSesiones.collectAsStateWithLifecycle()
+    val entradasDeHoy by diarioViewModel.entradasDeHoy.collectAsStateWithLifecycle()
 
     var preocupacion   by remember { mutableStateOf("") }
     var fueronBien     by remember { mutableStateOf("") }
@@ -51,7 +51,6 @@ fun DiarioScreen(
 
     LaunchedEffect(Unit) { visible = true }
 
-    // Sesiones de hoy para el resumen automático
     val sesionesHoy = remember(sesiones) { sesionesDeHoy(sesiones) }
     val promedioHoy = remember(sesionesHoy) {
         if (sesionesHoy.isEmpty()) null
@@ -66,7 +65,7 @@ fun DiarioScreen(
             .replaceFirstChar { it.uppercase() }
     }
 
-    val focusManager      = LocalFocusManager.current
+    val focusManager       = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Box(
@@ -77,10 +76,9 @@ fun DiarioScreen(
                     colors = listOf(Crema, VerdeMenta.copy(alpha = 0.25f))
                 )
             )
-            // Cierra teclado y quita foco al tocar fuera de cualquier campo
             .clickable(
-                indication          = null,
-                interactionSource   = remember { MutableInteractionSource() }
+                indication        = null,
+                interactionSource = remember { MutableInteractionSource() }
             ) {
                 focusManager.clearFocus()
                 keyboardController?.hide()
@@ -95,7 +93,6 @@ fun DiarioScreen(
         ) {
             Spacer(modifier = Modifier.height(48.dp))
 
-            // ── Header ────────────────────────────────────────────────────────
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(tween(500)) + slideInVertically(tween(500)) { -20 }
@@ -108,40 +105,34 @@ fun DiarioScreen(
                         color = VerdeSalvia
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = fechaHoy,
-                        fontSize = 13.sp,
-                        color = TextoSuave
-                    )
+                    Text(text = fechaHoy, fontSize = 13.sp, color = TextoSuave)
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ── Resumen automático de estrés ──────────────────────────────────
             AnimatedVisibility(
                 visible = visible && sesionesHoy.isNotEmpty(),
                 enter = fadeIn(tween(400, delayMillis = 150)) +
                         slideInVertically(tween(400, delayMillis = 150)) { 20 }
             ) {
                 ResumenEstresHoy(
-                    promedioHoy  = promedioHoy,
-                    mejorSesion  = mejorSesion,
+                    promedioHoy   = promedioHoy,
+                    mejorSesion   = mejorSesion,
                     totalSesiones = sesionesHoy.size
                 )
             }
 
             if (sesionesHoy.isNotEmpty()) Spacer(modifier = Modifier.height(12.dp))
 
-            // ── Preguntas guiadas ─────────────────────────────────────────────
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(tween(400, delayMillis = 200)) +
                         slideInVertically(tween(400, delayMillis = 200)) { 20 }
             ) {
                 SeccionPreguntasGuiadas(
-                    preocupacion = preocupacion,
-                    fueronBien   = fueronBien,
+                    preocupacion         = preocupacion,
+                    fueronBien           = fueronBien,
                     onPreocupacionChange = { preocupacion = it; guardado = false },
                     onFueronBienChange   = { fueronBien   = it; guardado = false }
                 )
@@ -149,7 +140,6 @@ fun DiarioScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // ── Pensamiento libre ─────────────────────────────────────────────
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(tween(400, delayMillis = 300)) +
@@ -163,13 +153,12 @@ fun DiarioScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ── Botón guardar ─────────────────────────────────────────────────
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(tween(400, delayMillis = 400))
             ) {
                 BotonGuardar(
-                    guardado = guardado,
+                    guardado   = guardado,
                     habilitado = preocupacion.isNotBlank() ||
                             fueronBien.isNotBlank()   ||
                             pensamiento.isNotBlank(),
@@ -183,7 +172,6 @@ fun DiarioScreen(
                 )
             }
 
-            // ── Contador entradas de hoy ──────────────────────────────────────
             if (entradasDeHoy.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
@@ -195,26 +183,23 @@ fun DiarioScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // ── Botón Ver historial ───────────────────────────────────────────
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(tween(400, delayMillis = 500))
             ) {
                 OutlinedButton(
-                    onClick = onVerHistorial,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(
+                    onClick  = onVerHistorial,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape    = RoundedCornerShape(14.dp),
+                    border   = androidx.compose.foundation.BorderStroke(
                         1.5.dp, VerdeSalvia.copy(alpha = 0.5f)
                     )
                 ) {
                     Text(
-                        text = "📅  Ver historial del diario",
-                        fontSize = 14.sp,
+                        text       = "📅  Ver historial del diario",
+                        fontSize   = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = VerdeSalvia
+                        color      = VerdeSalvia
                     )
                 }
             }
@@ -228,25 +213,22 @@ fun DiarioScreen(
 @Composable
 private fun ResumenEstresHoy(
     promedioHoy: Int?,
-    mejorSesion: SesionEstres?,
+    mejorSesion: SesionEstresMemoria?,
     totalSesiones: Int
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .border(1.5.dp, VerdeSalvia.copy(alpha = 0.20f), RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Blanco),
+        shape     = RoundedCornerShape(20.dp),
+        colors    = CardDefaults.cardColors(containerColor = Blanco),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            modifier              = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Número de estrés promedio
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -256,19 +238,19 @@ private fun ResumenEstresHoy(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = promedioHoy?.toString() ?: "-",
-                    fontSize = 24.sp,
+                    text       = promedioHoy?.toString() ?: "-",
+                    fontSize   = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = VerdeSalvia
+                    color      = VerdeSalvia
                 )
             }
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Estrés promedio hoy",
-                    fontSize = 14.sp,
+                    text       = "Estrés promedio hoy",
+                    fontSize   = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextoPrincipal
+                    color      = TextoPrincipal
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 val textoDetalle = if (mejorSesion != null &&
@@ -277,14 +259,8 @@ private fun ResumenEstresHoy(
                 } else {
                     "$totalSesiones ${if (totalSesiones == 1) "sesión" else "sesiones"} completadas"
                 }
-                Text(
-                    text = textoDetalle,
-                    fontSize = 12.sp,
-                    color = TextoSuave
-                )
+                Text(text = textoDetalle, fontSize = 12.sp, color = TextoSuave)
             }
-
-
         }
     }
 }
@@ -305,41 +281,38 @@ private fun SeccionPreguntasGuiadas(
         modifier = Modifier
             .fillMaxWidth()
             .border(1.5.dp, VerdeSalvia.copy(alpha = 0.18f), RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Blanco),
+        shape     = RoundedCornerShape(20.dp),
+        colors    = CardDefaults.cardColors(containerColor = Blanco),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "PREGUNTAS GUIADAS",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextoSuave,
+                text          = "PREGUNTAS GUIADAS",
+                fontSize      = 11.sp,
+                fontWeight    = FontWeight.SemiBold,
+                color         = TextoSuave,
                 letterSpacing = 0.8.sp
             )
             Spacer(modifier = Modifier.height(12.dp))
 
             PreguntaTextField(
-                pregunta   = "¿Qué te preocupa hoy?",
-                valor      = preocupacion,
-                onChange   = onPreocupacionChange,
-                colorBorde = VerdeSalvia,
-                imeAction  = ImeAction.Next,
+                pregunta    = "¿Qué te preocupa hoy?",
+                valor       = preocupacion,
+                onChange    = onPreocupacionChange,
+                colorBorde  = VerdeSalvia,
+                imeAction   = ImeAction.Next,
                 onImeAction = { focusFueronBien.requestFocus() }
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
             PreguntaTextField(
-                pregunta    = "¿Qué ha ido bien hoy?",
-                valor       = fueronBien,
-                onChange    = onFueronBienChange,
-                colorBorde  = VerdeMenta,
-                imeAction   = ImeAction.Done,
-                onImeAction = {
-                    focusManager.clearFocus()
-                    keyboardController?.hide()
-                },
+                pregunta       = "¿Qué ha ido bien hoy?",
+                valor          = fueronBien,
+                onChange       = onFueronBienChange,
+                colorBorde     = VerdeMenta,
+                imeAction      = ImeAction.Done,
+                onImeAction    = { focusManager.clearFocus(); keyboardController?.hide() },
                 focusRequester = focusFueronBien
             )
         }
@@ -348,10 +321,7 @@ private fun SeccionPreguntasGuiadas(
 
 // ── Pensamiento libre ──────────────────────────────────────────────────────────
 @Composable
-private fun SeccionPensamientoLibre(
-    pensamiento: String,
-    onChange: (String) -> Unit
-) {
+private fun SeccionPensamientoLibre(pensamiento: String, onChange: (String) -> Unit) {
     val focusManager       = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -359,40 +329,35 @@ private fun SeccionPensamientoLibre(
         modifier = Modifier
             .fillMaxWidth()
             .border(1.5.dp, VerdeSalvia.copy(alpha = 0.18f), RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Blanco),
+        shape     = RoundedCornerShape(20.dp),
+        colors    = CardDefaults.cardColors(containerColor = Blanco),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "MIS PENSAMIENTOS",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextoSuave,
+                text          = "MIS PENSAMIENTOS",
+                fontSize      = 11.sp,
+                fontWeight    = FontWeight.SemiBold,
+                color         = TextoSuave,
                 letterSpacing = 0.8.sp
             )
             Spacer(modifier = Modifier.height(12.dp))
             TextField(
-                value = pensamiento,
+                value         = pensamiento,
                 onValueChange = onChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 100.dp),
-                placeholder = {
+                modifier      = Modifier.fillMaxWidth().defaultMinSize(minHeight = 100.dp),
+                placeholder   = {
                     Text(
-                        text = "Escribe libremente lo que sientes...",
+                        text     = "Escribe libremente lo que sientes...",
                         fontSize = 13.sp,
-                        color = TextoSuave.copy(alpha = 0.6f)
+                        color    = TextoSuave.copy(alpha = 0.6f)
                     )
                 },
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     imeAction = ImeAction.Done
                 ),
                 keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                    }
+                    onDone = { focusManager.clearFocus(); keyboardController?.hide() }
                 ),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor   = SuperficieCard,
@@ -402,7 +367,7 @@ private fun SeccionPensamientoLibre(
                     focusedTextColor        = TextoPrincipal,
                     unfocusedTextColor      = TextoPrincipal
                 ),
-                shape = RoundedCornerShape(12.dp),
+                shape     = RoundedCornerShape(12.dp),
                 textStyle = LocalTextStyle.current.copy(fontSize = 14.sp, lineHeight = 20.sp)
             )
         }
@@ -411,35 +376,25 @@ private fun SeccionPensamientoLibre(
 
 // ── Botón guardar ──────────────────────────────────────────────────────────────
 @Composable
-private fun BotonGuardar(
-    guardado: Boolean,
-    habilitado: Boolean,
-    onClick: () -> Unit
-) {
+private fun BotonGuardar(guardado: Boolean, habilitado: Boolean, onClick: () -> Unit) {
     val focusManager       = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Button(
-        onClick = {
-            focusManager.clearFocus()
-            keyboardController?.hide()
-            onClick()
-        },
-        enabled = habilitado && !guardado,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(
+        onClick  = { focusManager.clearFocus(); keyboardController?.hide(); onClick() },
+        enabled  = habilitado && !guardado,
+        modifier = Modifier.fillMaxWidth().height(52.dp),
+        shape    = RoundedCornerShape(16.dp),
+        colors   = ButtonDefaults.buttonColors(
             containerColor         = VerdeSalvia,
             disabledContainerColor = if (guardado) VerdeMenta else VerdeSalvia.copy(alpha = 0.4f)
         )
     ) {
         Text(
-            text = if (guardado) "✓ Guardado" else "Guardar entrada",
-            fontSize = 16.sp,
+            text       = if (guardado) "✓ Guardado" else "Guardar entrada",
+            fontSize   = 16.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Blanco
+            color      = Blanco
         )
     }
 }
@@ -460,50 +415,32 @@ private fun PreguntaTextField(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(SuperficieCard)
-            .border(
-                width = 1.dp,
-                color = colorBorde.copy(alpha = 0.30f),
-                shape = RoundedCornerShape(12.dp)
-            )
+            .border(1.dp, colorBorde.copy(alpha = 0.30f), RoundedCornerShape(12.dp))
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(
                 modifier = Modifier
                     .width(3.dp)
                     .defaultMinSize(minHeight = 48.dp)
-                    .background(
-                        colorBorde,
-                        RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
-                    )
+                    .background(colorBorde, RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
             )
-            Column(modifier = Modifier.padding(start = 12.dp, top = 10.dp,
-                end = 12.dp, bottom = 4.dp)) {
+            Column(modifier = Modifier.padding(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 4.dp)) {
                 Text(
-                    text = pregunta,
-                    fontSize = 13.sp,
+                    text       = pregunta,
+                    fontSize   = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = VerdeSalvia
+                    color      = VerdeSalvia
                 )
                 TextField(
-                    value = valor,
+                    value         = valor,
                     onValueChange = onChange,
-                    modifier = Modifier
+                    modifier      = Modifier
                         .fillMaxWidth()
-                        .then(
-                            if (focusRequester != null)
-                                Modifier.focusRequester(focusRequester)
-                            else Modifier
-                        ),
-                    placeholder = {
-                        Text(
-                            text = "Escribe aquí...",
-                            fontSize = 13.sp,
-                            color = TextoSuave.copy(alpha = 0.5f)
-                        )
+                        .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
+                    placeholder   = {
+                        Text(text = "Escribe aquí...", fontSize = 13.sp, color = TextoSuave.copy(alpha = 0.5f))
                     },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        imeAction = imeAction
-                    ),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = imeAction),
                     keyboardActions = androidx.compose.foundation.text.KeyboardActions(
                         onNext = { onImeAction() },
                         onDone = { onImeAction() }
@@ -524,7 +461,7 @@ private fun PreguntaTextField(
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-private fun sesionesDeHoy(sesiones: List<SesionEstres>): List<SesionEstres> {
+private fun sesionesDeHoy(sesiones: List<SesionEstresMemoria>): List<SesionEstresMemoria> {
     val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
     return sesiones.filter { it.fecha == hoy }
 }
