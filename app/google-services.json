@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "981023896171",
+    "project_id": "calmio-83d0b",
+    "storage_bucket": "calmio-83d0b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981023896171:android:37dd9f04b9d8298ca9f72e",
+        "android_client_info": {
+          "package_name": "com.example.calmio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkfi-DkDWZaGXIuSjPlyXx0Z-qmbtV44E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
