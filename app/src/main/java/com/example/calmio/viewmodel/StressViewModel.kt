@@ -1,33 +1,31 @@
 package com.example.calmio.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.calmio.data.CalmioDatabase
-import com.example.calmio.data.SesionEstres
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class StressViewModel(application: Application) : AndroidViewModel(application) {
+// Modelo de datos en memoria (hasta migrar a Firestore en Semana 3)
+data class SesionEstresMemoria(
+    val fecha: String,
+    val juego: String,
+    val estresAntes: Int,
+    val estresDespues: Int
+)
 
-    private val dao = CalmioDatabase.getInstance(application).sesionDao()
+class StressViewModel : ViewModel() {
 
-    // Todas las sesiones como StateFlow — la UI se actualiza sola cuando cambian
-    val todasLasSesiones: StateFlow<List<SesionEstres>> = dao.obtenerTodas()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    // Lista en memoria — se reemplazará por Firestore más adelante
+    private val _todasLasSesiones = MutableStateFlow<List<SesionEstresMemoria>>(emptyList())
+    val todasLasSesiones: StateFlow<List<SesionEstresMemoria>> = _todasLasSesiones
 
-    // Derivado de todasLasSesiones — un solo observer en Room
-    val partidasPorJuego: StateFlow<Map<String, Int>> = todasLasSesiones
+    val partidasPorJuego: StateFlow<Map<String, Int>> = _todasLasSesiones
         .map { sesiones -> sesiones.groupingBy { it.juego }.eachCount() }
         .stateIn(
             scope = viewModelScope,
@@ -35,29 +33,24 @@ class StressViewModel(application: Application) : AndroidViewModel(application) 
             initialValue = emptyMap()
         )
 
-    // Devuelve true si el usuario ya registró su estrés hoy
-    suspend fun yaRegistroHoy(): Boolean {
+    fun yaRegistroHoy(): Boolean {
         val hoy = fechaHoy()
-        return dao.obtenerPorFecha(hoy).isNotEmpty()
+        return _todasLasSesiones.value.any { it.fecha == hoy }
     }
 
-    // Guarda una sesión completa (antes + después + juego)
     fun guardarSesion(juego: String, estresAntes: Int, estresDespues: Int) {
-        viewModelScope.launch {
-            dao.insertar(
-                SesionEstres(
-                    fecha         = fechaHoy(),
-                    juego         = juego,
-                    estresAntes   = estresAntes,
-                    estresDespues = estresDespues
-                )
-            )
-        }
+        val nuevaSesion = SesionEstresMemoria(
+            fecha         = fechaHoy(),
+            juego         = juego,
+            estresAntes   = estresAntes,
+            estresDespues = estresDespues
+        )
+        _todasLasSesiones.value = _todasLasSesiones.value + nuevaSesion
     }
 
-    suspend fun yaJugoHoy(): Boolean {
+    fun yaJugoHoy(): Boolean {
         val hoy = fechaHoy()
-        return dao.obtenerPorFecha(hoy).isNotEmpty()
+        return _todasLasSesiones.value.any { it.fecha == hoy }
     }
 
     private fun fechaHoy(): String {

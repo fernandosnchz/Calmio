@@ -1,29 +1,32 @@
 package com.example.calmio.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.calmio.data.CalmioDatabase
-import com.example.calmio.data.EntradaDiario
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.util.Calendar
 
-class DiarioViewModel(application: Application) : AndroidViewModel(application) {
+// Modelo en memoria
+data class EntradaDiarioMemoria(
+    val fechaTimestamp: Long = System.currentTimeMillis(),
+    val preocupacion: String = "",
+    val fueronBien: String = "",
+    val pensamientoLibre: String = ""
+)
 
-    private val dao = CalmioDatabase.getInstance(application).entradaDiarioDao()
+class DiarioViewModel : ViewModel() {
 
-    // Todas las entradas (para historial futuro)
-    val todasLasEntradas = dao.obtenerTodas()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    private val _todasLasEntradas = MutableStateFlow<List<EntradaDiarioMemoria>>(emptyList())
+    val todasLasEntradas: StateFlow<List<EntradaDiarioMemoria>> = _todasLasEntradas
 
-    // Entradas de hoy
-    val entradasDeHoy: Flow<List<EntradaDiario>> = dao.obtenerDeHoy(
-        inicioDia = inicioDiaTimestamp(),
-        finDia    = finDiaTimestamp()
-    )
+    val entradasDeHoy: StateFlow<List<EntradaDiarioMemoria>>
+        get() {
+            val inicio = inicioDiaTimestamp()
+            val fin = finDiaTimestamp()
+            val filtradas = _todasLasEntradas.value.filter {
+                it.fechaTimestamp in inicio..fin
+            }
+            return MutableStateFlow(filtradas)
+        }
 
     fun guardarEntrada(
         preocupacion: String,
@@ -31,18 +34,14 @@ class DiarioViewModel(application: Application) : AndroidViewModel(application) 
         pensamiento: String
     ) {
         if (preocupacion.isBlank() && fueronBien.isBlank() && pensamiento.isBlank()) return
-        viewModelScope.launch {
-            dao.insertar(
-                EntradaDiario(
-                    preocupacion     = preocupacion.trim(),
-                    fueronBien       = fueronBien.trim(),
-                    pensamientoLibre = pensamiento.trim()
-                )
-            )
-        }
+        val nueva = EntradaDiarioMemoria(
+            preocupacion     = preocupacion.trim(),
+            fueronBien       = fueronBien.trim(),
+            pensamientoLibre = pensamiento.trim()
+        )
+        _todasLasEntradas.value = _todasLasEntradas.value + nueva
     }
 
-    // ── Helpers de timestamp ─────────────────────────────────────────────────
     private fun inicioDiaTimestamp(): Long =
         Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
