@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.example.calmio.data.UserPreferences
+import com.example.calmio.data.repository.FirestoreUserRepository
 import com.example.calmio.worker.ReminderWorker
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -15,8 +17,9 @@ import java.util.concurrent.TimeUnit
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val prefs = UserPreferences(application)
+    private val prefs       = UserPreferences(application)
     private val workManager = WorkManager.getInstance(application)
+    private val userRepo    = FirestoreUserRepository()
 
     private val _darkMode = MutableStateFlow(false)
     val darkMode: StateFlow<Boolean> = _darkMode
@@ -33,6 +36,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _reminderMinute = MutableStateFlow(0)
     val reminderMinute: StateFlow<Int> = _reminderMinute
 
+    // ── Datos del perfil desde Firestore ────────────────────────────────────
+    private val _nombreUsuario = MutableStateFlow("")
+    val nombreUsuario: StateFlow<String> = _nombreUsuario
+
+    private val _emailUsuario = MutableStateFlow("")
+    val emailUsuario: StateFlow<String> = _emailUsuario
+
     init {
         viewModelScope.launch {
             _darkMode.value             = prefs.darkModeFlow.first()
@@ -40,6 +50,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _avatarIndex.value          = prefs.avatarIndexFlow.first()
             _reminderHour.value         = prefs.reminderHourFlow.first()
             _reminderMinute.value       = prefs.reminderMinuteFlow.first()
+        }
+        cargarPerfil()
+    }
+
+    fun cargarPerfil() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            userRepo.obtenerPerfil(userId)
+                .onSuccess { data ->
+                    _nombreUsuario.value = data["nombre"] as? String ?: ""
+                    _emailUsuario.value  = data["email"]  as? String ?: ""
+                }
         }
     }
 
@@ -54,11 +76,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             _notificationsEnabled.value = enabled
             prefs.setNotifications(enabled)
-            if (enabled) {
-                scheduleReminder(_reminderHour.value, _reminderMinute.value)
-            } else {
-                cancelReminder()
-            }
+            if (enabled) scheduleReminder(_reminderHour.value, _reminderMinute.value)
+            else cancelReminder()
         }
     }
 
@@ -74,24 +93,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _reminderHour.value   = hour
             _reminderMinute.value = minute
             prefs.setReminderTime(hour, minute)
-            // Reprograma solo si las notificaciones están activas
-            if (_notificationsEnabled.value) {
-                scheduleReminder(hour, minute)
-            }
+            if (_notificationsEnabled.value) scheduleReminder(hour, minute)
         }
     }
 
-    // ── WorkManager: programa tarea diaria a la hora elegida ────────────────
     private fun scheduleReminder(hour: Int, minute: Int) {
-        cancelReminder() // cancela cualquier tarea previa antes de crear una nueva
-
+        cancelReminder()
         val delay = calcularDelay(hour, minute)
-
         val request = PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS)
             .setInitialDelay(delay, TimeUnit.MILLISECONDS)
             .addTag(REMINDER_TAG)
             .build()
-
         workManager.enqueueUniquePeriodicWork(
             REMINDER_TAG,
             ExistingPeriodicWorkPolicy.REPLACE,
@@ -103,19 +115,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         workManager.cancelAllWorkByTag(REMINDER_TAG)
     }
 
-    // Calcula cuántos ms faltan hasta la próxima ocurrencia de hora:minuto
     private fun calcularDelay(hour: Int, minute: Int): Long {
-        val ahora = Calendar.getInstance()
+        val ahora   = Calendar.getInstance()
         val objetivo = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        // Si la hora ya pasó hoy, programar para mañana
-        if (objetivo.before(ahora)) {
-            objetivo.add(Calendar.DAY_OF_YEAR, 1)
-        }
+        if (objetivo.before(ahora)) objetivo.add(Calendar.DAY_OF_YEAR, 1)
         return objetivo.timeInMillis - ahora.timeInMillis
     }
 
