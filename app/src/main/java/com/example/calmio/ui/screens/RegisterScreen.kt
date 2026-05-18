@@ -24,14 +24,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.calmio.data.repository.FirebaseAuthRepository
+import com.example.calmio.data.repository.FirestoreUserRepository
 import com.example.calmio.ui.components.CalmioTextField
 import com.example.calmio.ui.theme.*
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class RegisterViewModel : ViewModel() {
-    private val repo = FirebaseAuthRepository()
+    private val authRepo = FirebaseAuthRepository()
+    private val userRepo = FirestoreUserRepository()
 
     private val _name = MutableStateFlow("")
     val name: StateFlow<String> = _name
@@ -70,8 +73,14 @@ class RegisterViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
-            repo.register(_email.value, _password.value, _name.value)
-                .onSuccess { onSuccess() }
+            authRepo.register(_email.value, _password.value, _name.value)
+                .onSuccess {
+                    val userId = FirebaseAuth.getInstance().currentUser?.uid
+                    if (userId != null) {
+                        userRepo.crearPerfil(userId, _name.value, _email.value)
+                    }
+                    onSuccess()
+                }
                 .onFailure { _errorMessage.value = "Este email ya está registrado" }
             _isLoading.value = false
         }
@@ -161,9 +170,7 @@ fun RegisterScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-
                     Spacer(Modifier.height(14.dp))
-
                     RegisterLabeledField(label = "EMAIL") {
                         CalmioTextField(
                             value = email,
@@ -172,9 +179,7 @@ fun RegisterScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-
                     Spacer(Modifier.height(14.dp))
-
                     RegisterLabeledField(label = "CONTRASEÑA") {
                         CalmioTextField(
                             value = password,
@@ -187,8 +192,7 @@ fun RegisterScreen(
                                     Icon(
                                         imageVector = if (passwordVisible)
                                             Icons.Filled.Visibility
-                                        else
-                                            Icons.Filled.VisibilityOff,
+                                        else Icons.Filled.VisibilityOff,
                                         contentDescription = "Ver contraseña",
                                         tint = VerdeSalvia
                                     )
@@ -212,9 +216,7 @@ fun RegisterScreen(
                     Button(
                         onClick = { registerViewModel.onRegisterClick(onRegisterSuccess) },
                         enabled = !isLoading,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
+                        modifier = Modifier.fillMaxWidth().height(54.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = VerdeSalvia)
                     ) {
@@ -225,11 +227,7 @@ fun RegisterScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                         else
-                            Text(
-                                text = "Crear cuenta",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Text("Crear cuenta", fontSize = 16.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
