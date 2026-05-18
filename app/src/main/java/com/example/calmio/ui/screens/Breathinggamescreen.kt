@@ -48,7 +48,6 @@ fun BreathingGameScreen(
     var phase by remember { mutableStateOf(BreathPhase.INHALE) }
     var cycleCount by remember { mutableIntStateOf(0) }
 
-    // Música de fondo con MediaPlayer (igual que en los otros juegos)
     DisposableEffect(Unit) {
         val mediaPlayer = MediaPlayer.create(context, R.raw.breathing_game)
         mediaPlayer.isLooping = true
@@ -62,14 +61,13 @@ fun BreathingGameScreen(
         }
     }
 
-    // Avanza de fase automáticamente según la duración de cada una
     LaunchedEffect(phase) {
         delay(phase.durationMs)
         if (phase == BreathPhase.EXHALE) cycleCount++
         phase = phase.next()
     }
 
-    // Escala del círculo: grande en INHALE/HOLD, pequeño en EXHALE
+    // Escala del círculo
     val targetScale = when (phase) {
         BreathPhase.INHALE -> 1f
         BreathPhase.HOLD   -> 1f
@@ -92,7 +90,7 @@ fun BreathingGameScreen(
         label = "breathCircle"
     )
 
-    // Opacidad del halo exterior: pulsa suavemente siempre
+    // Opacidad del halo exterior
     val haloAlpha by rememberInfiniteTransition(label = "halo").animateFloat(
         initialValue = 0.15f,
         targetValue  = 0.35f,
@@ -171,7 +169,7 @@ fun BreathingGameScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(260.dp)
                 ) {
-                    // Halo exterior (siempre al 100% del espacio disponible)
+                    // Halo exterior
                     Box(
                         modifier = Modifier
                             .size(260.dp)

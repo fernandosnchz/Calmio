@@ -80,7 +80,7 @@ fun StressScreen(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Número grande con color
+
                     Text(
                         text = nivelActual.toString(),
                         fontSize = 72.sp,

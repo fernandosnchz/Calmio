@@ -36,13 +36,13 @@ import com.example.calmio.viewmodel.LoginViewModel
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit = {},
-    onForgotPassword: () -> Unit = {}, // ← añadido
+    onForgotPassword: () -> Unit = {},
     loginViewModel: LoginViewModel = viewModel()
 ) {
     val email by loginViewModel.email.collectAsState()
     val password by loginViewModel.password.collectAsState()
     val errorMessage by loginViewModel.errorMessage.collectAsState()
-    val isLoading by loginViewModel.isLoading.collectAsState() // ← añadido
+    val isLoading by loginViewModel.isLoading.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
 
     Box(

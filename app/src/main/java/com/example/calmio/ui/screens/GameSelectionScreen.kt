@@ -25,11 +25,11 @@ import com.example.calmio.ui.theme.Terracota
 import com.example.calmio.ui.theme.VerdeMenta
 import com.example.calmio.ui.theme.VerdeSalvia
 
-// Paleta pastel por juego (fondos de card)
-private val BgAros        = Color(0xFFE8F5EF)   // verde muy suave
-private val BgBurbujas    = Color(0xFFE6F2F8)   // azul cielo suave
-private val BgPesca       = Color(0xFFFFF0E6)   // melocotón suave
-private val BgRespiracion = Color(0xFFEAF0FB)   // lavanda-azul suave
+// Paleta pastel por juego
+private val BgAros        = Color(0xFFE8F5EF)
+private val BgBurbujas    = Color(0xFFE6F2F8)
+private val BgPesca       = Color(0xFFFFF0E6)
+private val BgRespiracion = Color(0xFFEAF0FB)
 
 private val AzulSereno    = Color(0xFF7EB8C9)
 
@@ -63,7 +63,7 @@ fun GameSelectionScreen(
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
 
-    // Determina el juego más jugado (si hay datos)
+    // Determina el juego más jugado (esto ocurre si hay datos)
     val rutaFavorita = partidasPorJuego
         .filter { it.value > 0 }
         .maxByOrNull { it.value }
@@ -109,7 +109,7 @@ fun GameSelectionScreen(
                 }
             }
 
-            // ── Juego destacado (solo si hay estadísticas) ────────────────────
+            // ── Juego destacado (solo cuando hay estadísticas) ───────────────
             if (juegoFavorito != null) {
                 Spacer(modifier = Modifier.height(32.dp))
                 AnimatedVisibility(
@@ -164,7 +164,7 @@ fun GameSelectionScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tarjeta de juego destacado (hero card)
+// Tarjeta de juego destacado
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun FeaturedGameCard(juego: JuegoInfo, onClick: () -> Unit) {
@@ -289,7 +289,7 @@ fun FeaturedGameCard(juego: JuegoInfo, onClick: () -> Unit) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tarjeta de juego estándar (mejorada)
+// Tarjeta de juego estándar
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun GameCard(
@@ -322,13 +322,13 @@ fun GameCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),           // más padding interno
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // ── Icono más grande ──────────────────────────────────────────────
             Box(
                 modifier = Modifier
-                    .size(68.dp)           // aumentado de 56 → 68 dp
+                    .size(68.dp)
                     .clip(RoundedCornerShape(18.dp))
                     .background(
                         brush = Brush.linearGradient(
@@ -341,7 +341,7 @@ fun GameCard(
                     .border(1.dp, juego.accentColor.copy(alpha = 0.20f), RoundedCornerShape(18.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = juego.emoji, fontSize = 32.sp)  // emoji más grande
+                Text(text = juego.emoji, fontSize = 32.sp)
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -356,14 +356,12 @@ fun GameCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(3.dp))
-                // Descripción: fuente más grande (13→15 sp)
                 Text(
                     text = juego.descripcion,
                     fontSize = 15.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                // Tag de beneficio
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50.dp))

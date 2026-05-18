@@ -31,13 +31,11 @@ import com.example.calmio.game.JuegoPescarView
 @Composable
 fun PescaScreen(onVolver: () -> Unit) {
 
-    // Interceptamos el botón/gesto "Atrás" del sistema para no salir de la app
     BackHandler { onVolver() }
 
     AndroidView(
         factory = { context ->
             JuegoPescarView(context).also { vista ->
-                // Conectamos el botón 🔙 del juego con la navegación de Calmio
                 vista.onVolverAlMenu = { onVolver() }
             }
         },

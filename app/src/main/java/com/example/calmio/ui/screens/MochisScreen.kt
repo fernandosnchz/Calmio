@@ -28,12 +28,11 @@ import androidx.compose.ui.unit.sp
 import com.example.calmio.R
 import com.example.calmio.game.MotorMochis
 
-// onVolver: igual que en ArosScreen, el juego avisa "quiero salir"
-// y MainActivity decide qué hacer (ir a stress_despues o al menú)
+
 @Composable
 fun MochisScreen(onVolver: () -> Unit) {
 
-    val context = LocalContext.current // NUEVO: necesitamos el contexto para los sonidos
+    val context = LocalContext.current
     val motor = remember { MotorMochis() }
     var tamanyoPantalla by remember { mutableStateOf(IntSize.Zero) }
     var contadorFotogramas by remember { mutableStateOf(0) }
@@ -41,8 +40,6 @@ fun MochisScreen(onVolver: () -> Unit) {
     val medidorDeTexto = rememberTextMeasurer()
     val animacion = rememberInfiniteTransition()
 
-    // NUEVO: Preparamos el SoundPool para el sonido de explosión
-    // (igual que motorEfectos en Base.kt)
     val soundPool = remember {
         val atributos = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_GAME)
@@ -51,27 +48,22 @@ fun MochisScreen(onVolver: () -> Unit) {
         SoundPool.Builder().setMaxStreams(5).setAudioAttributes(atributos).build()
     }
 
-    // NUEVO: Cargamos el sonido de explosión desde res/raw/
     val idSonidoExplosion = remember {
         soundPool.load(context, R.raw.sonido_explosion, 1)
     }
 
-    // NUEVO: Conectamos el motor con el sonido de explosión
     LaunchedEffect(Unit) {
         motor.onExplotar = {
             soundPool.play(idSonidoExplosion, 1f, 1f, 0, 0, 1f)
         }
     }
 
-    // NUEVO: Música de fondo con MediaPlayer (igual que en Base.kt)
     DisposableEffect(Unit) {
         val mediaPlayer = MediaPlayer.create(context, R.raw.musica_mochis)
         mediaPlayer.isLooping = true
         mediaPlayer.setVolume(0.9f, 0.9f)
         mediaPlayer.start()
 
-        // onDispose se ejecuta cuando el usuario sale de la pantalla
-        // Es importante parar la música al salir, igual que hace surfaceDestroyed en Base.kt
         onDispose {
             mediaPlayer.stop()
             mediaPlayer.release()
@@ -93,7 +85,7 @@ fun MochisScreen(onVolver: () -> Unit) {
     val colorArriba = lerp(azulClaro, azulOscuro, faseOla)
     val colorAbajo = lerp(azulOscuro, azulClaro, faseOla)
 
-    // Game loop (igual que el del profesor)
+    // Game loop
     LaunchedEffect(Unit) {
         while (true) {
             withFrameNanos {
@@ -140,7 +132,7 @@ fun MochisScreen(onVolver: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // NUEVO respecto al original: botón para volver al menú de Calmio
+
             TextButton(onClick = onVolver) {
                 Text("🔙 Volver", fontSize = 16.sp, color = Color(0xFFE65100))
             }

@@ -305,7 +305,7 @@ fun SettingsScreen(
                     darkMode  = darkMode
                 )
 
-                // Selector de hora — solo visible cuando las notificaciones están ON
+                // Selector de hora
                 AnimatedVisibility(
                     visible = notificaciones,
                     enter   = expandVertically() + fadeIn(),
