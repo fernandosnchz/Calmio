@@ -120,6 +120,9 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
         }
 
         composable("main") {
+            LaunchedEffect(Unit) {
+                settingsViewModel.cargarPerfil()
+            }
             MainScreen(
                 stressViewModel      = stressViewModel,
                 diarioViewModel      = diarioViewModel,
