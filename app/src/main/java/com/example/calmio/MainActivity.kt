@@ -137,6 +137,7 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                     navController.navigate("historial_diario")
                 },
                 onCerrarSesion = {
+                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
@@ -150,11 +151,13 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
         composable("settings") {
             SettingsScreen(
                 onCerrarSesion = {
+                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onBorrarCuenta = {
+                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
