@@ -1,11 +1,19 @@
 package com.example.calmio.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.calmio.data.repository.FirestoreEntradaDiarioRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
-// Modelo en memoria
 data class EntradaDiarioMemoria(
     val fechaTimestamp: Long = System.currentTimeMillis(),
     val preocupacion: String = "",
@@ -15,31 +23,48 @@ data class EntradaDiarioMemoria(
 
 class DiarioViewModel : ViewModel() {
 
-    private val _todasLasEntradas = MutableStateFlow<List<EntradaDiarioMemoria>>(emptyList())
-    val todasLasEntradas: StateFlow<List<EntradaDiarioMemoria>> = _todasLasEntradas
+    private val repo = FirestoreEntradaDiarioRepository()
 
-    val entradasDeHoy: StateFlow<List<EntradaDiarioMemoria>>
-        get() {
-            val inicio = inicioDiaTimestamp()
-            val fin = finDiaTimestamp()
-            val filtradas = _todasLasEntradas.value.filter {
-                it.fechaTimestamp in inicio..fin
-            }
-            return MutableStateFlow(filtradas)
+    private val _userId = MutableStateFlow(FirebaseAuth.getInstance().currentUser?.uid)
+
+    val todasLasEntradas: StateFlow<List<EntradaDiarioMemoria>> = _userId
+        .flatMapLatest { uid ->
+            if (uid != null) repo.obtenerEntradas(uid)
+            else flowOf(emptyList())
         }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
-    fun guardarEntrada(
-        preocupacion: String,
-        fueronBien: String,
-        pensamiento: String
-    ) {
+    val entradasDeHoy: StateFlow<List<EntradaDiarioMemoria>> = todasLasEntradas
+        .map { entradas ->
+            val inicio = inicioDiaTimestamp()
+            val fin    = finDiaTimestamp()
+            entradas.filter { it.fechaTimestamp in inicio..fin }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    fun guardarEntrada(preocupacion: String, fueronBien: String, pensamiento: String) {
         if (preocupacion.isBlank() && fueronBien.isBlank() && pensamiento.isBlank()) return
-        val nueva = EntradaDiarioMemoria(
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val entrada = EntradaDiarioMemoria(
             preocupacion     = preocupacion.trim(),
             fueronBien       = fueronBien.trim(),
             pensamientoLibre = pensamiento.trim()
         )
-        _todasLasEntradas.value = _todasLasEntradas.value + nueva
+        viewModelScope.launch {
+            repo.guardarEntrada(userId, entrada)
+        }
+    }
+
+    fun recargarUsuario() {
+        _userId.value = FirebaseAuth.getInstance().currentUser?.uid
     }
 
     private fun inicioDiaTimestamp(): Long =
