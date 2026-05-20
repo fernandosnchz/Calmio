@@ -122,6 +122,8 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
         composable("main") {
             LaunchedEffect(Unit) {
                 settingsViewModel.cargarPerfil()
+                stressViewModel.recargarUsuario()
+                diarioViewModel.recargarUsuario()
             }
             MainScreen(
                 stressViewModel      = stressViewModel,
