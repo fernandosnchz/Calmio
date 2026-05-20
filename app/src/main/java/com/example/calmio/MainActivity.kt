@@ -33,6 +33,7 @@ import com.example.calmio.ui.theme.VerdeSalvia
 import com.example.calmio.viewmodel.DiarioViewModel
 import com.example.calmio.viewmodel.SettingsViewModel
 import com.example.calmio.viewmodel.StressViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -59,7 +60,11 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
     var estresAntes by remember { mutableStateOf(0) }
     var juegoActual by remember { mutableStateOf("") }
 
-    NavHost(navController = navController, startDestination = "login") {
+    // Si ya hay sesión activa hace que salte el login
+    val usuarioActual = FirebaseAuth.getInstance().currentUser
+    val startDestination = if (usuarioActual != null) "main" else "login"
+
+    NavHost(navController = navController, startDestination = startDestination) {
 
         // ── Auth ────────────────────────────────────────────────────────────
         composable("login") {
@@ -97,13 +102,13 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
 
         // ── App ─────────────────────────────────────────────────────────────
         composable("stress_antes") {
-            val scope = rememberCoroutineScope()
-            LaunchedEffect(Unit) {
-                scope.launch {
-                    if (stressViewModel.yaRegistroHoy()) {
-                        navController.navigate("main") {
-                            popUpTo("stress_antes") { inclusive = true }
-                        }
+            // Con esto puedo esperar a que Firestore cargue antes de comprobar
+            val cargado by stressViewModel.cargado.collectAsState()
+
+            LaunchedEffect(cargado) {
+                if (cargado && stressViewModel.yaRegistroHoy()) {
+                    navController.navigate("main") {
+                        popUpTo("stress_antes") { inclusive = true }
                     }
                 }
             }
@@ -137,7 +142,7 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                     navController.navigate("historial_diario")
                 },
                 onCerrarSesion = {
-                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                    FirebaseAuth.getInstance().signOut()
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
@@ -151,13 +156,13 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
         composable("settings") {
             SettingsScreen(
                 onCerrarSesion = {
-                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                    FirebaseAuth.getInstance().signOut()
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onBorrarCuenta = {
-                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                    FirebaseAuth.getInstance().signOut()
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
