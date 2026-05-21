@@ -63,7 +63,7 @@ fun GameSelectionScreen(
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
 
-    // Determina el juego más jugado (esto ocurre si hay datos)
+    // Determina el juego más jugado (esto ocurre solo si hay datos)
     val rutaFavorita = partidasPorJuego
         .filter { it.value > 0 }
         .maxByOrNull { it.value }

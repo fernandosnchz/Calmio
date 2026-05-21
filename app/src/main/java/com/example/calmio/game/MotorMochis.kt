@@ -50,13 +50,13 @@ data class Mochi(
  */
 class MotorMochis {
     companion object {
-        const val MAX_MOCHIS = 1000 // Límite máximo de elementos en memoria
+        const val MAX_MOCHIS = 1000 // Límite máximo de elementos en la memoria
     }
 
     // Sistema de puntuación del jugador
     var puntuacion: Int = 0
 
-    // En este juego, la "gravedad" actúa como flotabilidad (aceleración hacia arriba)
+    // La gravedad actúa como flotabilidad (aceleración hacia arriba)
     private val gravedad = 0.01f
 
     var mochis = mutableStateListOf<Mochi>()
@@ -66,9 +66,6 @@ class MotorMochis {
     var onExplotar: (() -> Unit)? = null
 
     /**
-     * Procesa la interacción del usuario con la pantalla.
-     * En lugar de moverlos (como en el motor anterior), aquí los "destruye" o marca como explotados.
-     *
      * @param xToque Coordenada horizontal donde pulsó el jugador.
      * @param yToque Coordenada vertical donde pulsó el jugador.
      */
@@ -80,14 +77,13 @@ class MotorMochis {
                 mochi.tiempoExplotado = System.currentTimeMillis()
                 puntuacion++
                 onExplotar?.invoke()
-                break // Solo podemos explotar uno por cada toque, así que salimos del bucle
+                break // Con esto puedes explotar uno por cada toque, así que salimos del bucle
             }
         }
     }
 
     /**
      * Función auxiliar para generar un nuevo elemento fuera de la pantalla.
-     *
      * @param anchoPantalla Ancho del área de juego para calcular posiciones X aleatorias.
      * @param altoPantalla Alto del área de juego para hacerlo aparecer desde el fondo.
      */
@@ -101,7 +97,7 @@ class MotorMochis {
         )
         mochis.add(nuevoMochi)
 
-        // Medida de seguridad: borrar los más antiguos si superamos el límite
+        // Medida de seguridad para borrar los más antiguos si superamos el límite
         if (mochis.size > MAX_MOCHIS) {
             mochis.removeFirstOrNull()
         }
@@ -121,7 +117,7 @@ class MotorMochis {
         for (mochi in mochis) {
             // FÍSICAS CONDICIONALES: Solo movemos los que NO han sido explotados
             if (!mochi.explotado) {
-                // Aumentamos su velocidad
+                // Aumento de su velocidad
                 mochi.velocidadY += gravedad
                 // RESTAMOS la velocidad en Y. Como el punto 0 de Y está arriba,
                 // restar significa que el objeto sube (flota) por la pantalla.
@@ -130,8 +126,8 @@ class MotorMochis {
         }
 
         // LIMPIEZA DE MEMORIA:
-        // Eliminamos automáticamente cualquier mochi que haya subido tanto que
-        // ya no se ve en pantalla (y <= -250f). Esto evita que el móvil se colapse
+        // Elimina automáticamente cualquier mochi que haya subido tanto que
+        // ya no se ve en pantalla. Esto evita que el móvil se colapse
         // intentando recordar elementos que ya están fuera del juego.
         mochis.removeAll( { it.y <= -250f } )
 
