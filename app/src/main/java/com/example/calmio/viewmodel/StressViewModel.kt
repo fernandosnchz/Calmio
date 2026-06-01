@@ -49,13 +49,16 @@ class StressViewModel : ViewModel() {
         )
 
     // Cuando Firestore ya responde al menos una vez no repite login
-    val cargado: StateFlow<Boolean> = todasLasSesiones
-        .map { true }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
-        )
+    private val _cargado = MutableStateFlow(false)
+    val cargado: StateFlow<Boolean> = _cargado
+
+    init {
+        viewModelScope.launch {
+            todasLasSesiones.collect {
+                _cargado.value = true
+            }
+        }
+    }
 
     fun yaRegistroHoy(): Boolean {
         val hoy = fechaHoy()

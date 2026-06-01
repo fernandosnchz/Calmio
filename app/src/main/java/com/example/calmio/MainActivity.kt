@@ -62,7 +62,7 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
 
     // Si ya hay sesión activa hace que salte el login
     val usuarioActual = FirebaseAuth.getInstance().currentUser
-    val startDestination = if (usuarioActual != null) "main" else "login"
+    val startDestination = if (usuarioActual != null) "stress_antes" else "login"
 
     NavHost(navController = navController, startDestination = startDestination) {
 
