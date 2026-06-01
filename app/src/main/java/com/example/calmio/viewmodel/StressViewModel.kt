@@ -84,6 +84,7 @@ class StressViewModel : ViewModel() {
     }
 
     fun recargarUsuario() {
+        _cargado.value = false
         _userId.value = FirebaseAuth.getInstance().currentUser?.uid
     }
 
