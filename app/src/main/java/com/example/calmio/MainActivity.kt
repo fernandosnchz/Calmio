@@ -70,6 +70,8 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
+                    stressViewModel.recargarUsuario()
+                    diarioViewModel.recargarUsuario()
                     navController.navigate("stress_antes") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -87,6 +89,8 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
             RegisterScreen(
                 onBack = { navController.popBackStack() },
                 onRegisterSuccess = {
+                    stressViewModel.recargarUsuario()
+                    diarioViewModel.recargarUsuario()
                     navController.navigate("stress_antes") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -104,8 +108,9 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
         composable("stress_antes") {
             // Con esto puedo esperar a que Firestore cargue antes de comprobar
             val cargado by stressViewModel.cargado.collectAsState()
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
 
-            LaunchedEffect(cargado) {
+            LaunchedEffect(cargado, userId) {
                 if (cargado && stressViewModel.yaRegistroHoy()) {
                     navController.navigate("main") {
                         popUpTo("stress_antes") { inclusive = true }
