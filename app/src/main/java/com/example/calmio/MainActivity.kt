@@ -46,6 +46,7 @@ import com.example.calmio.viewmodel.DiarioViewModel
 import com.example.calmio.viewmodel.SettingsViewModel
 import com.example.calmio.viewmodel.StressViewModel
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -123,20 +124,31 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
             val sesiones by stressViewModel.todasLasSesiones.collectAsState()
             val cargado  by stressViewModel.cargado.collectAsState()
 
-            LaunchedEffect(sesiones, cargado) {
-                if (cargado && stressViewModel.yaRegistroHoy()) {
+            // Garantiza que la pantalla de carga se vea al menos 1,5 segundos,
+            // aunque Firestore responda antes
+            var tiempoMinimoPasado by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                delay(1500)
+                tiempoMinimoPasado = true
+            }
+
+            // Solo decidimos cuando Firestore respondio Y paso el tiempo minimo
+            val listoParaDecidir = cargado && tiempoMinimoPasado
+
+            LaunchedEffect(sesiones, listoParaDecidir) {
+                if (listoParaDecidir && stressViewModel.yaRegistroHoy()) {
                     navController.navigate("main") {
                         popUpTo("stress_antes") { inclusive = true }
                     }
                 }
             }
 
-            if (!cargado) {
+            if (!listoParaDecidir) {
                 // Pantalla de carga con logo que "respira" (crece y decrece en bucle)
                 val transicion = rememberInfiniteTransition(label = "respiracion")
                 val escala by transicion.animateFloat(
-                    initialValue = 0.85f,
-                    targetValue = 1.15f,
+                    initialValue = 0.7f,
+                    targetValue = 1.3f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(1500, easing = FastOutSlowInEasing),
                         repeatMode = RepeatMode.Reverse
@@ -153,13 +165,13 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "🌿",
-                            fontSize = 64.sp,
+                            fontSize = 96.sp,
                             modifier = Modifier.scale(escala)
                         )
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(20.dp))
                         Text(
                             text = "Respira...",
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             color = VerdeSalvia
                         )
                     }
