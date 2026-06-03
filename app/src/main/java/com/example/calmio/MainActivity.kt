@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -118,16 +120,31 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                     }
                 }
             }
-            StressScreen(
-                titulo    = "¿Cómo estás ahora mismo?",
-                subtitulo = "Indica tu nivel de estrés antes de jugar",
-                onConfirmar = { nivel ->
-                    estresAntes = nivel
-                    navController.navigate("main") {
-                        popUpTo("stress_antes") { inclusive = true }
-                    }
+
+            if (!cargado) {
+                // Mientras Firestore responde, mostramos una pantalla de carga
+                // (asi nunca se ve la pantalla de estres "de relleno")
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = VerdeSalvia)
                 }
-            )
+            } else if (!stressViewModel.yaRegistroHoy()) {
+                // Ya cargo y NO registro hoy: mostramos la pantalla de estres
+                StressScreen(
+                    titulo    = "¿Cómo estás ahora mismo?",
+                    subtitulo = "Indica tu nivel de estrés antes de jugar",
+                    onConfirmar = { nivel ->
+                        estresAntes = nivel
+                        navController.navigate("main") {
+                            popUpTo("stress_antes") { inclusive = true }
+                        }
+                    }
+                )
+            }
+            // Si ya cargo Y registro hoy, no dibujamos nada porque el
+            // LaunchedEffect de arriba ya navega a "main"
         }
 
         composable("main") {
