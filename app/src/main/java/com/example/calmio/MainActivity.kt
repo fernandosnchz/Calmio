@@ -4,8 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +30,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -122,13 +132,37 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
             }
 
             if (!cargado) {
-                // Mientras Firestore responde, mostramos una pantalla de carga
-                // (asi nunca se ve la pantalla de estres "de relleno")
+                // Pantalla de carga con logo que "respira" (crece y decrece en bucle)
+                val transicion = rememberInfiniteTransition(label = "respiracion")
+                val escala by transicion.animateFloat(
+                    initialValue = 0.85f,
+                    targetValue = 1.15f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1500, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "escala"
+                )
+
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Crema),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = VerdeSalvia)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "🌿",
+                            fontSize = 64.sp,
+                            modifier = Modifier.scale(escala)
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = "Respira...",
+                            fontSize = 18.sp,
+                            color = VerdeSalvia
+                        )
+                    }
                 }
             } else if (!stressViewModel.yaRegistroHoy()) {
                 // Ya cargo y NO registro hoy: mostramos la pantalla de estres
@@ -150,6 +184,8 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
         composable("main") {
             LaunchedEffect(Unit) {
                 settingsViewModel.cargarPerfil()
+//                stressViewModel.recargarUsuario()
+//                diarioViewModel.recargarUsuario()
             }
             MainScreen(
                 stressViewModel      = stressViewModel,
