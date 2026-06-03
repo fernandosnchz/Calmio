@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -48,15 +49,19 @@ class StressViewModel : ViewModel() {
             initialValue = emptyMap()
         )
 
-    // Cuando Firestore ya responde al menos una vez no repite login
+    // true SOLO cuando Firestore ya ha respondido de verdad
     private val _cargado = MutableStateFlow(false)
     val cargado: StateFlow<Boolean> = _cargado
 
     init {
         viewModelScope.launch {
-            todasLasSesiones.collect {
-                _cargado.value = true
-            }
+            // drop(1) salta el initialValue = emptyList() del stateIn,
+            // asi cargado solo se vuelve true con la respuesta real de Firestore
+            todasLasSesiones
+                .drop(1)
+                .collect {
+                    _cargado.value = true
+                }
         }
     }
 
