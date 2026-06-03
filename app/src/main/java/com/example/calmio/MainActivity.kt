@@ -119,20 +119,15 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
 
         // ── App ─────────────────────────────────────────────────────────────
         composable("stress_antes") {
-            // Reaccionamos directamente a la lista de sesiones, no solo a un booleano.
-            // Asi solo decidimos cuando Firestore ya ha respondido de verdad.
             val sesiones by stressViewModel.todasLasSesiones.collectAsState()
             val cargado  by stressViewModel.cargado.collectAsState()
 
-            // Garantiza que la pantalla de carga se vea al menos 1,5 segundos,
-            // aunque Firestore responda antes
             var tiempoMinimoPasado by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) {
                 delay(1500)
                 tiempoMinimoPasado = true
             }
 
-            // Solo decidimos cuando Firestore respondio Y paso el tiempo minimo
             val listoParaDecidir = cargado && tiempoMinimoPasado
 
             LaunchedEffect(sesiones, listoParaDecidir) {
@@ -144,7 +139,6 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
             }
 
             if (!listoParaDecidir) {
-                // Pantalla de carga con logo que "respira" (crece y decrece en bucle)
                 val transicion = rememberInfiniteTransition(label = "respiracion")
                 val escala by transicion.animateFloat(
                     initialValue = 0.7f,
@@ -177,7 +171,6 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                     }
                 }
             } else if (!stressViewModel.yaRegistroHoy()) {
-                // Ya cargo y NO registro hoy: mostramos la pantalla de estres
                 StressScreen(
                     titulo    = "¿Cómo estás ahora mismo?",
                     subtitulo = "Indica tu nivel de estrés antes de jugar",
@@ -189,15 +182,11 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                     }
                 )
             }
-            // Si ya cargo Y registro hoy, no dibujamos nada porque el
-            // LaunchedEffect de arriba ya navega a "main"
         }
 
         composable("main") {
             LaunchedEffect(Unit) {
                 settingsViewModel.cargarPerfil()
-//                stressViewModel.recargarUsuario()
-//                diarioViewModel.recargarUsuario()
             }
             MainScreen(
                 stressViewModel      = stressViewModel,
