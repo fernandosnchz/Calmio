@@ -106,11 +106,12 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
 
         // ── App ─────────────────────────────────────────────────────────────
         composable("stress_antes") {
-            // Con esto puedo esperar a que Firestore cargue antes de comprobar
-            val cargado by stressViewModel.cargado.collectAsState()
-            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            // Reaccionamos directamente a la lista de sesiones, no solo a un booleano.
+            // Asi solo decidimos cuando Firestore ya ha respondido de verdad.
+            val sesiones by stressViewModel.todasLasSesiones.collectAsState()
+            val cargado  by stressViewModel.cargado.collectAsState()
 
-            LaunchedEffect(cargado, userId) {
+            LaunchedEffect(sesiones, cargado) {
                 if (cargado && stressViewModel.yaRegistroHoy()) {
                     navController.navigate("main") {
                         popUpTo("stress_antes") { inclusive = true }
