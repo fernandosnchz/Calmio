@@ -43,13 +43,14 @@ fun SettingsScreen(
     onVolver: () -> Unit,
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
-    val darkMode       by settingsViewModel.darkMode.collectAsState()
-    val notificaciones by settingsViewModel.notificationsEnabled.collectAsState()
-    val avatarIndex    by settingsViewModel.avatarIndex.collectAsState()
-    val reminderHour   by settingsViewModel.reminderHour.collectAsState()
-    val reminderMinute by settingsViewModel.reminderMinute.collectAsState()
-    val nombre         by settingsViewModel.nombreUsuario.collectAsState()
-    val email          by settingsViewModel.emailUsuario.collectAsState()
+    val uiState by settingsViewModel.uiState.collectAsState()
+    val darkMode       = uiState.darkMode
+    val notificaciones = uiState.notificationsEnabled
+    val avatarIndex    = uiState.avatarIndex
+    val reminderHour   = uiState.reminderHour
+    val reminderMinute = uiState.reminderMinute
+    val nombre         = uiState.nombreUsuario
+    val email          = uiState.emailUsuario
 
     var mostrarDialogoCerrar  by remember { mutableStateOf(false) }
     var mostrarDialogoBorrar  by remember { mutableStateOf(false) }
