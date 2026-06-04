@@ -1,6 +1,6 @@
 package com.example.calmio.data.repository
 
-import com.example.calmio.viewmodel.SesionEstresMemoria
+import com.example.calmio.data.model.SesionEstresMemoria
 import kotlinx.coroutines.flow.Flow
 
 interface SesionRepository {
