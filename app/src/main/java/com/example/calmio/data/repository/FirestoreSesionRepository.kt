@@ -1,6 +1,6 @@
 package com.example.calmio.data.repository
 
-import com.example.calmio.viewmodel.SesionEstresMemoria
+import com.example.calmio.data.model.SesionEstresMemoria
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
