@@ -16,8 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -26,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.foundation.Canvas
 import com.example.calmio.ui.components.CalmioTextField
 import com.example.calmio.ui.theme.*
@@ -39,11 +36,17 @@ fun LoginScreen(
     onForgotPassword: () -> Unit = {},
     loginViewModel: LoginViewModel = viewModel()
 ) {
-    val email by loginViewModel.email.collectAsState()
-    val password by loginViewModel.password.collectAsState()
-    val errorMessage by loginViewModel.errorMessage.collectAsState()
-    val isLoading by loginViewModel.isLoading.collectAsState()
+    // Una sola caja de estado con todo lo que necesita la pantalla.
+    val uiState by loginViewModel.uiState.collectAsState()
+    // Estado puramente visual: vive en la pantalla, no en el ViewModel.
     var passwordVisible by remember { mutableStateOf(false) }
+
+    // Cuando el login va bien, la pantalla reacciona y navega (una sola vez).
+    LaunchedEffect(uiState.loginSuccess) {
+        if (uiState.loginSuccess) {
+            onLoginSuccess()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -137,7 +140,7 @@ fun LoginScreen(
                     // Campo Email con label superior
                     LabeledField(label = "EMAIL") {
                         CalmioTextField(
-                            value = email,
+                            value = uiState.email,
                             onValueChange = { loginViewModel.onEmailChange(it) },
                             label = "Correo del usuario",
                             modifier = Modifier.fillMaxWidth()
@@ -149,7 +152,7 @@ fun LoginScreen(
                     // Campo Contraseña con label superior
                     LabeledField(label = "CONTRASEÑA") {
                         CalmioTextField(
-                            value = password,
+                            value = uiState.password,
                             onValueChange = { loginViewModel.onPasswordChange(it) },
                             label = "••••••••",
                             visualTransformation = if (passwordVisible)
@@ -167,7 +170,7 @@ fun LoginScreen(
                         )
                     }
 
-                    // ¿Olvidaste tu contraseña? ← conectado
+                    // ¿Olvidaste tu contraseña?
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -179,14 +182,14 @@ fun LoginScreen(
                             fontSize = 12.sp,
                             color = Terracota,
                             fontWeight = FontWeight.Medium,
-                            modifier = Modifier.clickable { onForgotPassword() } // ← conectado
+                            modifier = Modifier.clickable { onForgotPassword() }
                         )
                     }
 
-                    // Error message
-                    AnimatedVisibility(visible = errorMessage != null) {
+                    // Mensaje de error
+                    AnimatedVisibility(visible = uiState.errorMessage != null) {
                         Text(
-                            text = errorMessage ?: "",
+                            text = uiState.errorMessage ?: "",
                             color = Error,
                             fontSize = 13.sp,
                             modifier = Modifier.padding(bottom = 12.dp)
@@ -195,8 +198,8 @@ fun LoginScreen(
 
                     // Botón principal
                     Button(
-                        onClick = { loginViewModel.onLoginClick(onLoginSuccess) },
-                        enabled = !isLoading, // ← añadido
+                        onClick = { loginViewModel.onLoginClick() },
+                        enabled = !uiState.isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(54.dp),
@@ -206,8 +209,8 @@ fun LoginScreen(
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        // Muestra spinner mientras carga ← añadido
-                        if (isLoading)
+                        // Muestra spinner mientras carga
+                        if (uiState.isLoading)
                             CircularProgressIndicator(
                                 color = Color.White,
                                 strokeWidth = 2.dp,
