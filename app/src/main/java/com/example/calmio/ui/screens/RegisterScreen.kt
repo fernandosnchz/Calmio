@@ -20,72 +20,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.calmio.data.repository.FirebaseAuthRepository
-import com.example.calmio.data.repository.FirestoreUserRepository
 import com.example.calmio.ui.components.CalmioTextField
 import com.example.calmio.ui.theme.*
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-
-class RegisterViewModel : ViewModel() {
-    private val authRepo = FirebaseAuthRepository()
-    private val userRepo = FirestoreUserRepository()
-
-    private val _name = MutableStateFlow("")
-    val name: StateFlow<String> = _name
-
-    private val _email = MutableStateFlow("")
-    val email: StateFlow<String> = _email
-
-    private val _password = MutableStateFlow("")
-    val password: StateFlow<String> = _password
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
-    fun onNameChange(v: String) { _name.value = v }
-    fun onEmailChange(v: String) { _email.value = v }
-    fun onPasswordChange(v: String) { _password.value = v }
-
-    fun onRegisterClick(onSuccess: () -> Unit) {
-        when {
-            _name.value.isBlank() -> {
-                _errorMessage.value = "El nombre no puede estar vacío"
-                return
-            }
-            _email.value.isBlank() -> {
-                _errorMessage.value = "El email no puede estar vacío"
-                return
-            }
-            _password.value.length < 6 -> {
-                _errorMessage.value = "La contraseña debe tener al menos 6 caracteres"
-                return
-            }
-        }
-        viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-            authRepo.register(_email.value, _password.value, _name.value)
-                .onSuccess {
-                    val userId = FirebaseAuth.getInstance().currentUser?.uid
-                    if (userId != null) {
-                        userRepo.crearPerfil(userId, _name.value, _email.value)
-                    }
-                    onSuccess()
-                }
-                .onFailure { _errorMessage.value = "Este email ya está registrado" }
-            _isLoading.value = false
-        }
-    }
-}
+import com.example.calmio.viewmodel.RegisterViewModel
 
 @Composable
 fun RegisterScreen(
@@ -93,12 +31,15 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
     registerViewModel: RegisterViewModel = viewModel()
 ) {
-    val name by registerViewModel.name.collectAsState()
-    val email by registerViewModel.email.collectAsState()
-    val password by registerViewModel.password.collectAsState()
-    val errorMessage by registerViewModel.errorMessage.collectAsState()
-    val isLoading by registerViewModel.isLoading.collectAsState()
+    val uiState by registerViewModel.uiState.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
+
+    // Cuando el registro va bien, la pantalla reacciona y navega (una sola vez).
+    LaunchedEffect(uiState.registerSuccess) {
+        if (uiState.registerSuccess) {
+            onRegisterSuccess()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -164,7 +105,7 @@ fun RegisterScreen(
 
                     RegisterLabeledField(label = "NOMBRE") {
                         CalmioTextField(
-                            value = name,
+                            value = uiState.name,
                             onValueChange = registerViewModel::onNameChange,
                             label = "Tu nombre",
                             modifier = Modifier.fillMaxWidth()
@@ -173,7 +114,7 @@ fun RegisterScreen(
                     Spacer(Modifier.height(14.dp))
                     RegisterLabeledField(label = "EMAIL") {
                         CalmioTextField(
-                            value = email,
+                            value = uiState.email,
                             onValueChange = registerViewModel::onEmailChange,
                             label = "Correo electrónico",
                             modifier = Modifier.fillMaxWidth()
@@ -182,7 +123,7 @@ fun RegisterScreen(
                     Spacer(Modifier.height(14.dp))
                     RegisterLabeledField(label = "CONTRASEÑA") {
                         CalmioTextField(
-                            value = password,
+                            value = uiState.password,
                             onValueChange = registerViewModel::onPasswordChange,
                             label = "Mínimo 6 caracteres",
                             visualTransformation = if (passwordVisible)
@@ -202,9 +143,9 @@ fun RegisterScreen(
                         )
                     }
 
-                    AnimatedVisibility(visible = errorMessage != null) {
+                    AnimatedVisibility(visible = uiState.errorMessage != null) {
                         Text(
-                            text = errorMessage ?: "",
+                            text = uiState.errorMessage ?: "",
                             color = Error,
                             fontSize = 13.sp,
                             modifier = Modifier.padding(top = 10.dp)
@@ -214,13 +155,13 @@ fun RegisterScreen(
                     Spacer(Modifier.height(20.dp))
 
                     Button(
-                        onClick = { registerViewModel.onRegisterClick(onRegisterSuccess) },
-                        enabled = !isLoading,
+                        onClick = { registerViewModel.onRegisterClick() },
+                        enabled = !uiState.isLoading,
                         modifier = Modifier.fillMaxWidth().height(54.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = VerdeSalvia)
                     ) {
-                        if (isLoading)
+                        if (uiState.isLoading)
                             CircularProgressIndicator(
                                 color = Color.White,
                                 strokeWidth = 2.dp,
