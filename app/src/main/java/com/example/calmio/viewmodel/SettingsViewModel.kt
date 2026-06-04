@@ -10,10 +10,23 @@ import com.example.calmio.worker.ReminderWorker
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
+
+// Toda la información que necesita la pantalla de ajustes, en una sola caja.
+data class SettingsUiState(
+    val darkMode: Boolean = false,
+    val notificationsEnabled: Boolean = false,
+    val avatarIndex: Int = 0,
+    val reminderHour: Int = 20,
+    val reminderMinute: Int = 0,
+    val nombreUsuario: String = "",
+    val emailUsuario: String = ""
+)
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -21,35 +34,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val workManager = WorkManager.getInstance(application)
     private val userRepo    = FirestoreUserRepository()
 
-    private val _darkMode = MutableStateFlow(false)
-    val darkMode: StateFlow<Boolean> = _darkMode
-
-    private val _notificationsEnabled = MutableStateFlow(false)
-    val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled
-
-    private val _avatarIndex = MutableStateFlow(0)
-    val avatarIndex: StateFlow<Int> = _avatarIndex
-
-    private val _reminderHour = MutableStateFlow(20)
-    val reminderHour: StateFlow<Int> = _reminderHour
-
-    private val _reminderMinute = MutableStateFlow(0)
-    val reminderMinute: StateFlow<Int> = _reminderMinute
-
-    // ── Datos del perfil desde Firestore ────────────────────────────────────
-    private val _nombreUsuario = MutableStateFlow("")
-    val nombreUsuario: StateFlow<String> = _nombreUsuario
-
-    private val _emailUsuario = MutableStateFlow("")
-    val emailUsuario: StateFlow<String> = _emailUsuario
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            _darkMode.value             = prefs.darkModeFlow.first()
-            _notificationsEnabled.value = prefs.notificationsFlow.first()
-            _avatarIndex.value          = prefs.avatarIndexFlow.first()
-            _reminderHour.value         = prefs.reminderHourFlow.first()
-            _reminderMinute.value       = prefs.reminderMinuteFlow.first()
+            _uiState.update {
+                it.copy(
+                    darkMode             = prefs.darkModeFlow.first(),
+                    notificationsEnabled = prefs.notificationsFlow.first(),
+                    avatarIndex          = prefs.avatarIndexFlow.first(),
+                    reminderHour         = prefs.reminderHourFlow.first(),
+                    reminderMinute       = prefs.reminderMinuteFlow.first()
+                )
+            }
         }
         cargarPerfil()
     }
@@ -59,41 +57,45 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             userRepo.obtenerPerfil(userId)
                 .onSuccess { data ->
-                    _nombreUsuario.value = data["nombre"] as? String ?: ""
-                    _emailUsuario.value  = data["email"]  as? String ?: ""
+                    _uiState.update {
+                        it.copy(
+                            nombreUsuario = data["nombre"] as? String ?: "",
+                            emailUsuario  = data["email"]  as? String ?: ""
+                        )
+                    }
                 }
         }
     }
 
     fun setDarkMode(enabled: Boolean) {
         viewModelScope.launch {
-            _darkMode.value = enabled
+            _uiState.update { it.copy(darkMode = enabled) }
             prefs.setDarkMode(enabled)
         }
     }
 
     fun setNotifications(enabled: Boolean) {
         viewModelScope.launch {
-            _notificationsEnabled.value = enabled
+            _uiState.update { it.copy(notificationsEnabled = enabled) }
             prefs.setNotifications(enabled)
-            if (enabled) scheduleReminder(_reminderHour.value, _reminderMinute.value)
+            val state = _uiState.value
+            if (enabled) scheduleReminder(state.reminderHour, state.reminderMinute)
             else cancelReminder()
         }
     }
 
     fun setAvatarIndex(index: Int) {
         viewModelScope.launch {
-            _avatarIndex.value = index
+            _uiState.update { it.copy(avatarIndex = index) }
             prefs.setAvatarIndex(index)
         }
     }
 
     fun setReminderTime(hour: Int, minute: Int) {
         viewModelScope.launch {
-            _reminderHour.value   = hour
-            _reminderMinute.value = minute
+            _uiState.update { it.copy(reminderHour = hour, reminderMinute = minute) }
             prefs.setReminderTime(hour, minute)
-            if (_notificationsEnabled.value) scheduleReminder(hour, minute)
+            if (_uiState.value.notificationsEnabled) scheduleReminder(hour, minute)
         }
     }
 
