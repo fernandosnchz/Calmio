@@ -6,43 +6,64 @@ import com.example.calmio.data.repository.AuthRepository
 import com.example.calmio.data.repository.FirebaseAuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+// Toda la información que necesita la pantalla de login, en una sola caja.
+data class LoginUiState(
+    val email: String = "",
+    val password: String = "",
+    val errorMessage: String? = null,
+    val isLoading: Boolean = false,
+    val loginSuccess: Boolean = false
+)
 
 class LoginViewModel(
     private val authRepository: AuthRepository = FirebaseAuthRepository()
 ) : ViewModel() {
 
-    private val _email = MutableStateFlow("")
-    val email: StateFlow<String> = _email
+    // Versión privada: solo el ViewModel puede modificarla.
+    private val _uiState = MutableStateFlow(LoginUiState())
+    // Versión pública: la pantalla solo puede leerla.
+    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    private val _password = MutableStateFlow("")
-    val password: StateFlow<String> = _password
+    fun onEmailChange(newEmail: String) {
+        _uiState.update { it.copy(email = newEmail) }
+    }
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
+    fun onPasswordChange(newPassword: String) {
+        _uiState.update { it.copy(password = newPassword) }
+    }
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    fun onLoginClick() {
+        val state = _uiState.value
 
-    fun onEmailChange(newEmail: String) { _email.value = newEmail }
-    fun onPasswordChange(newPassword: String) { _password.value = newPassword }
-
-    fun onLoginClick(onSuccess: () -> Unit) {
-        if (_email.value.isBlank()) {
-            _errorMessage.value = "El email no puede estar vacío"
+        if (state.email.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "El email no puede estar vacío") }
             return
         }
-        if (_password.value.length < 6) {
-            _errorMessage.value = "La contraseña debe tener al menos 6 caracteres"
+        if (state.password.length < 6) {
+            _uiState.update {
+                it.copy(errorMessage = "La contraseña debe tener al menos 6 caracteres")
+            }
             return
         }
+
         viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-            authRepository.login(_email.value, _password.value)
-                .onSuccess { onSuccess() }
-                .onFailure { _errorMessage.value = "Email o contraseña incorrectos" }
-            _isLoading.value = false
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            authRepository.login(state.email, state.password)
+                .onSuccess {
+                    _uiState.update { it.copy(isLoading = false, loginSuccess = true) }
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = "Email o contraseña incorrectos"
+                        )
+                    }
+                }
         }
     }
 }
