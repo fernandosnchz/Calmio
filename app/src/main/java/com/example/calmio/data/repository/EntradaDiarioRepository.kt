@@ -1,6 +1,6 @@
 package com.example.calmio.data.repository
 
-import com.example.calmio.viewmodel.EntradaDiarioMemoria
+import com.example.calmio.data.model.EntradaDiarioMemoria
 import kotlinx.coroutines.flow.Flow
 
 interface EntradaDiarioRepository {
