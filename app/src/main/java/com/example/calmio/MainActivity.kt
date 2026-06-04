@@ -55,7 +55,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel()
-            val darkMode by settingsViewModel.darkMode.collectAsState()
+            val uiState by settingsViewModel.uiState.collectAsState()
+            val darkMode = uiState.darkMode
 
             CalmioTheme(darkTheme = darkMode) {
                 CalmioApp(settingsViewModel = settingsViewModel)
@@ -312,8 +313,9 @@ fun MainScreen(
 ) {
     var tabSeleccionada by remember { mutableStateOf(0) }
     val partidasPorJuego by stressViewModel.partidasPorJuego.collectAsState()
-    val darkMode by settingsViewModel.darkMode.collectAsState()
-    val avatarIndex by settingsViewModel.avatarIndex.collectAsState()
+    val uiState by settingsViewModel.uiState.collectAsState()
+    val darkMode = uiState.darkMode
+    val avatarIndex = uiState.avatarIndex
 
     val bgColor = if (darkMode)
         MaterialTheme.colorScheme.background
