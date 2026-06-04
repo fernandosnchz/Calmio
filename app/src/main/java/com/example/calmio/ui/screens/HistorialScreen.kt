@@ -35,7 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.calmio.ui.theme.Crema
 import com.example.calmio.ui.theme.VerdeMenta
 import com.example.calmio.ui.theme.VerdeSalvia
-import com.example.calmio.viewmodel.SesionEstresMemoria
+import com.example.calmio.data.model.SesionEstresMemoria
 import com.example.calmio.viewmodel.StressViewModel
 
 private val ColorAntes   = Color(0xFFF44336)
