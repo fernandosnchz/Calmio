@@ -21,9 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.calmio.data.model.EntradaDiarioMemoria
 import com.example.calmio.ui.theme.*
 import com.example.calmio.viewmodel.DiarioViewModel
-import com.example.calmio.viewmodel.EntradaDiarioMemoria
 import java.text.SimpleDateFormat
 import java.util.*
 
