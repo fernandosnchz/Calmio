@@ -26,9 +26,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.calmio.data.model.SesionEstresMemoria
 import com.example.calmio.ui.theme.*
 import com.example.calmio.viewmodel.DiarioViewModel
-import com.example.calmio.viewmodel.SesionEstresMemoria
 import com.example.calmio.viewmodel.StressViewModel
 import java.text.SimpleDateFormat
 import java.util.*
