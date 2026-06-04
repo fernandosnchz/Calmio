@@ -2,6 +2,7 @@ package com.example.calmio.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.calmio.data.model.SesionEstresMemoria
 import com.example.calmio.data.repository.FirestoreSesionRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,13 +17,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-data class SesionEstresMemoria(
-    val fecha: String = "",
-    val juego: String = "",
-    val estresAntes: Int = 0,
-    val estresDespues: Int = 0
-)
 
 class StressViewModel : ViewModel() {
 
