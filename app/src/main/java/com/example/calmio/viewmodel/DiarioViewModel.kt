@@ -2,6 +2,7 @@ package com.example.calmio.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.calmio.data.model.EntradaDiarioMemoria
 import com.example.calmio.data.repository.FirestoreEntradaDiarioRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,13 +14,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
-
-data class EntradaDiarioMemoria(
-    val fechaTimestamp: Long = System.currentTimeMillis(),
-    val preocupacion: String = "",
-    val fueronBien: String = "",
-    val pensamientoLibre: String = ""
-)
 
 class DiarioViewModel : ViewModel() {
 
