@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,47 +15,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.calmio.data.repository.FirebaseAuthRepository
 import com.example.calmio.ui.components.CalmioTextField
 import com.example.calmio.ui.theme.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-
-sealed class ForgotPasswordState {
-    object Idle : ForgotPasswordState()
-    object Loading : ForgotPasswordState()
-    object Success : ForgotPasswordState()
-    data class Error(val message: String) : ForgotPasswordState()
-}
-
-class ForgotPasswordViewModel : ViewModel() {
-    private val repo = FirebaseAuthRepository()
-
-    private val _email = MutableStateFlow("")
-    val email: StateFlow<String> = _email
-
-    private val _uiState = MutableStateFlow<ForgotPasswordState>(ForgotPasswordState.Idle)
-    val uiState: StateFlow<ForgotPasswordState> = _uiState
-
-    fun onEmailChange(value: String) { _email.value = value }
-
-    fun onSendClick() {
-        if (_email.value.isBlank()) {
-            _uiState.value = ForgotPasswordState.Error("Introduce tu email")
-            return
-        }
-        viewModelScope.launch {
-            _uiState.value = ForgotPasswordState.Loading
-            repo.sendPasswordReset(_email.value)
-                .onSuccess { _uiState.value = ForgotPasswordState.Success }
-                .onFailure { _uiState.value = ForgotPasswordState.Error("Email no encontrado") }
-        }
-    }
-}
+import com.example.calmio.viewmodel.ForgotPasswordState
+import com.example.calmio.viewmodel.ForgotPasswordViewModel
 
 @Composable
 fun ForgotPasswordScreen(
@@ -86,7 +50,11 @@ fun ForgotPasswordScreen(
                 .padding(16.dp)
                 .align(Alignment.TopStart)
         ) {
-            Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = TextoPrincipal)
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Volver",
+                tint = TextoPrincipal
+            )
         }
 
         Column(
