@@ -74,13 +74,13 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
     var estresAntes by remember { mutableStateOf(0) }
     var juegoActual by remember { mutableStateOf("") }
 
-    // Si ya hay sesión activa hace que salte el login
+    // Si ya hay sesion activa hace que salte el login
     val usuarioActual = FirebaseAuth.getInstance().currentUser
     val startDestination = if (usuarioActual != null) "stress_antes" else "login"
 
     NavHost(navController = navController, startDestination = startDestination) {
 
-        // ── Auth ────────────────────────────────────────────────────────────
+        // -- Auth ------------------------------------------------------------
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
@@ -118,7 +118,7 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
             )
         }
 
-        // ── App ─────────────────────────────────────────────────────────────
+        // -- App -------------------------------------------------------------
         composable("stress_antes") {
             val sesiones by stressViewModel.todasLasSesiones.collectAsState()
             val cargado  by stressViewModel.cargado.collectAsState()
@@ -159,7 +159,7 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "🌿",
+                            text = "\uD83C\uDF3F",
                             fontSize = 96.sp,
                             modifier = Modifier.scale(escala)
                         )
@@ -173,8 +173,8 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                 }
             } else if (!stressViewModel.yaRegistroHoy()) {
                 StressScreen(
-                    titulo    = "¿Cómo estás ahora mismo?",
-                    subtitulo = "Indica tu nivel de estrés antes de jugar",
+                    titulo    = "\u00bfC\u00f3mo est\u00e1s ahora mismo?",
+                    subtitulo = "Indica tu nivel de estr\u00e9s antes de jugar",
                     onConfirmar = { nivel ->
                         estresAntes = nivel
                         navController.navigate("main") {
@@ -220,8 +220,10 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
+                // Al borrar la cuenta de Auth la sesion ya desaparece sola, asi que
+                // aqui solo navegamos al login. El borrado real lo hace el ViewModel
+                // y la pantalla solo llama a esto cuando el borrado ha terminado bien.
                 onBorrarCuenta = {
-                    FirebaseAuth.getInstance().signOut()
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
@@ -282,8 +284,8 @@ fun CalmioApp(settingsViewModel: SettingsViewModel) {
 
         composable("stress_despues") {
             StressScreen(
-                titulo         = "¿Cómo te sientes ahora?",
-                subtitulo      = "Indica tu nivel de estrés después de jugar",
+                titulo         = "\u00bfC\u00f3mo te sientes ahora?",
+                subtitulo      = "Indica tu nivel de estr\u00e9s despu\u00e9s de jugar",
                 estresAnterior = estresAntes,
                 onConfirmar    = { nivel ->
                     stressViewModel.guardarSesion(
@@ -328,7 +330,7 @@ fun MainScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text       = "🌿 Calmio",
+                        text       = "\uD83C\uDF3F Calmio",
                         fontWeight = FontWeight.Bold,
                         fontSize   = 20.sp,
                         color      = VerdeSalvia
