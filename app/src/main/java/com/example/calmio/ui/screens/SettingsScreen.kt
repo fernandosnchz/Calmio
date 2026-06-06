@@ -14,25 +14,27 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.calmio.ui.theme.*
 import com.example.calmio.viewmodel.SettingsViewModel
+import android.widget.Toast
 
 data class AvatarOption(val emoji: String, val background: Color)
 
 val AVATARS = listOf(
-    AvatarOption("🌿", Color(0xFF7C9E87)),
-    AvatarOption("🦋", Color(0xFF9BB5D6)),
-    AvatarOption("🌸", Color(0xFFD49BB5)),
-    AvatarOption("🐢", Color(0xFF6B9E6B)),
-    AvatarOption("🌊", Color(0xFF5B9EC9)),
-    AvatarOption("🍃", Color(0xFF89B89A)),
-    AvatarOption("🦔", Color(0xFFC4956A)),
-    AvatarOption("🌙", Color(0xFF8B7EC8)),
-    AvatarOption("☀️", Color(0xFFD4A85A)),
+    AvatarOption("\uD83C\uDF3F", Color(0xFF7C9E87)),
+    AvatarOption("\uD83E\uDD8B", Color(0xFF9BB5D6)),
+    AvatarOption("\uD83C\uDF38", Color(0xFFD49BB5)),
+    AvatarOption("\uD83D\uDC22", Color(0xFF6B9E6B)),
+    AvatarOption("\uD83C\uDF0A", Color(0xFF5B9EC9)),
+    AvatarOption("\uD83C\uDF43", Color(0xFF89B89A)),
+    AvatarOption("\uD83E\uDD94", Color(0xFFC4956A)),
+    AvatarOption("\uD83C\uDF19", Color(0xFF8B7EC8)),
+    AvatarOption("\u2600\uFE0F", Color(0xFFD4A85A)),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,23 +54,41 @@ fun SettingsScreen(
     val nombre         = uiState.nombreUsuario
     val email          = uiState.emailUsuario
 
+    // NUEVO: contexto para mostrar mensajes (Toast) de error.
+    val context = LocalContext.current
+
     var mostrarDialogoCerrar  by remember { mutableStateOf(false) }
     var mostrarDialogoBorrar  by remember { mutableStateOf(false) }
     var mostrarSelectorAvatar by remember { mutableStateOf(false) }
     var mostrarTimePicker     by remember { mutableStateOf(false) }
 
-    // ── Diálogo: Cerrar sesión ───────────────────────────────────────────────
+    // NUEVO: cuando la cuenta se borra con exito, navegamos al login.
+    LaunchedEffect(uiState.cuentaBorrada) {
+        if (uiState.cuentaBorrada) {
+            onBorrarCuenta()
+        }
+    }
+
+    // NUEVO: si hay un error al borrar, lo mostramos y lo limpiamos.
+    LaunchedEffect(uiState.errorBorrado) {
+        uiState.errorBorrado?.let { mensaje ->
+            Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
+            settingsViewModel.limpiarErrorBorrado()
+        }
+    }
+
+    // -- Dialogo: Cerrar sesion ------------------------------------------------
     if (mostrarDialogoCerrar) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoCerrar = false },
             icon  = { Icon(Icons.Filled.ExitToApp, contentDescription = null, tint = Terracota) },
-            title = { Text("Cerrar sesión", fontWeight = FontWeight.Bold) },
-            text  = { Text("¿Seguro que quieres salir de tu cuenta?") },
+            title = { Text("Cerrar sesion", fontWeight = FontWeight.Bold) },
+            text  = { Text("\u00bfSeguro que quieres salir de tu cuenta?") },
             confirmButton = {
                 Button(
                     onClick = { mostrarDialogoCerrar = false; onCerrarSesion() },
                     colors  = ButtonDefaults.buttonColors(containerColor = Terracota)
-                ) { Text("Sí, salir") }
+                ) { Text("Si, salir") }
             },
             dismissButton = {
                 TextButton(onClick = { mostrarDialogoCerrar = false }) { Text("Cancelar") }
@@ -76,31 +96,48 @@ fun SettingsScreen(
         )
     }
 
-    // ── Diálogo: Borrar cuenta ───────────────────────────────────────────────
+    // -- Dialogo: Borrar cuenta ------------------------------------------------
     if (mostrarDialogoBorrar) {
         AlertDialog(
-            onDismissRequest = { mostrarDialogoBorrar = false },
+            onDismissRequest = { if (!uiState.borrandoCuenta) mostrarDialogoBorrar = false },
             icon  = { Icon(Icons.Filled.DeleteForever, contentDescription = null, tint = Error) },
             title = { Text("Borrar cuenta", fontWeight = FontWeight.Bold) },
             text  = {
                 Text(
-                    "Esta acción eliminará permanentemente tu cuenta y todos tus datos. No se puede deshacer.",
+                    "Esta accion eliminara permanentemente tu cuenta y todos tus datos. No se puede deshacer.",
                     textAlign = TextAlign.Center
                 )
             },
             confirmButton = {
                 Button(
-                    onClick = { mostrarDialogoBorrar = false; onBorrarCuenta() },
+                    // NUEVO: ahora llama al borrado real del ViewModel.
+                    // No cerramos el dialogo aqui: se cerrara solo al navegar
+                    // (exito) o se quedara para reintentar (error).
+                    onClick = { settingsViewModel.eliminarCuenta() },
+                    enabled = !uiState.borrandoCuenta,
                     colors  = ButtonDefaults.buttonColors(containerColor = Error)
-                ) { Text("Borrar definitivamente") }
+                ) {
+                    if (uiState.borrandoCuenta) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    } else {
+                        Text("Borrar definitivamente")
+                    }
+                }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarDialogoBorrar = false }) { Text("Cancelar") }
+                TextButton(
+                    onClick = { mostrarDialogoBorrar = false },
+                    enabled = !uiState.borrandoCuenta
+                ) { Text("Cancelar") }
             }
         )
     }
 
-    // ── Diálogo: TimePicker ──────────────────────────────────────────────────
+    // -- Dialogo: TimePicker ---------------------------------------------------
     if (mostrarTimePicker) {
         val timePickerState = rememberTimePickerState(
             initialHour   = reminderHour,
@@ -145,7 +182,7 @@ fun SettingsScreen(
         )
     }
 
-    // ── Hoja inferior: Selector de avatar ────────────────────────────────────
+    // -- Hoja inferior: Selector de avatar -------------------------------------
     if (mostrarSelectorAvatar) {
         ModalBottomSheet(
             onDismissRequest = { mostrarSelectorAvatar = false },
@@ -225,7 +262,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // ── Sección: Perfil ──────────────────────────────────────────────
+            // -- Seccion: Perfil --------------------------------------------
             SettingsSection(title = "Perfil", darkMode = darkMode) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
@@ -245,7 +282,6 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(10.dp))
 
-                        // Nombre del usuario desde Firestore
                         if (nombre.isNotBlank()) {
                             Text(
                                 text       = nombre,
@@ -254,7 +290,6 @@ fun SettingsScreen(
                                 color      = if (darkMode) Color.White else TextoPrincipal
                             )
                         }
-                        // Email del usuario desde Firestore
                         if (email.isNotBlank()) {
                             Text(
                                 text     = email,
@@ -274,7 +309,7 @@ fun SettingsScreen(
                 }
             }
 
-            // ── Sección: Apariencia ──────────────────────────────────────────
+            // -- Seccion: Apariencia ----------------------------------------
             SettingsSection(title = "Apariencia", darkMode = darkMode) {
                 SettingsToggleRow(
                     icon      = if (darkMode) Icons.Filled.DarkMode else Icons.Outlined.LightMode,
@@ -287,7 +322,7 @@ fun SettingsScreen(
                 )
             }
 
-            // ── Sección: Notificaciones ──────────────────────────────────────
+            // -- Seccion: Notificaciones ------------------------------------
             SettingsSection(title = "Notificaciones", darkMode = darkMode) {
                 SettingsToggleRow(
                     icon      = if (notificaciones) Icons.Filled.Notifications else Icons.Filled.NotificationsOff,
@@ -344,24 +379,24 @@ fun SettingsScreen(
                 }
             }
 
-            // ── Sección: Información ─────────────────────────────────────────
-            SettingsSection(title = "Información", darkMode = darkMode) {
+            // -- Seccion: Informacion ---------------------------------------
+            SettingsSection(title = "Informacion", darkMode = darkMode) {
                 SettingsInfoRow(icon = Icons.Filled.Info, iconTint = VerdeSalvia,
-                    title = "Versión de la app", value = "1.0.0", darkMode = darkMode)
+                    title = "Version de la app", value = "1.0.0", darkMode = darkMode)
                 HorizontalDivider(color = if (darkMode) Color(0xFF2C2C2C) else Color(0xFFEAE5DF),
                     modifier = Modifier.padding(horizontal = 8.dp))
                 SettingsInfoRow(icon = Icons.Filled.Shield, iconTint = VerdeSalvia,
-                    title = "Política de privacidad", value = "", darkMode = darkMode, clickable = true)
+                    title = "Politica de privacidad", value = "", darkMode = darkMode, clickable = true)
                 HorizontalDivider(color = if (darkMode) Color(0xFF2C2C2C) else Color(0xFFEAE5DF),
                     modifier = Modifier.padding(horizontal = 8.dp))
                 SettingsInfoRow(icon = Icons.Filled.HelpOutline, iconTint = VerdeSalvia,
                     title = "Ayuda y soporte", value = "", darkMode = darkMode, clickable = true)
             }
 
-            // ── Sección: Cuenta ──────────────────────────────────────────────
+            // -- Seccion: Cuenta --------------------------------------------
             SettingsSection(title = "Cuenta", darkMode = darkMode) {
                 SettingsActionRow(icon = Icons.Filled.ExitToApp, iconTint = Terracota,
-                    title = "Cerrar sesión", color = Terracota, darkMode = darkMode,
+                    title = "Cerrar sesion", color = Terracota, darkMode = darkMode,
                     onClick = { mostrarDialogoCerrar = true })
                 HorizontalDivider(color = if (darkMode) Color(0xFF2C2C2C) else Color(0xFFEAE5DF),
                     modifier = Modifier.padding(horizontal = 8.dp))
@@ -375,7 +410,7 @@ fun SettingsScreen(
     }
 }
 
-// ─── Componentes reutilizables ───────────────────────────────────────────────
+// --- Componentes reutilizables ----------------------------------------------
 
 @Composable
 private fun SettingsSection(title: String, darkMode: Boolean, content: @Composable ColumnScope.() -> Unit) {
