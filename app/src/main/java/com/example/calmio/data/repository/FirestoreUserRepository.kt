@@ -43,4 +43,20 @@ class FirestoreUserRepository : UserRepository {
             Result.failure(e)
         }
     }
+
+    // Borra el documento del perfil del usuario en Firestore.
+    // Nota: las subcolecciones (entradas de diario y sesiones de estrés) NO se borran
+    // automáticamente con esta llamada; quedarían como datos huérfanos. Para este
+    // proyecto se ha optado por esta solución sencilla.
+    override suspend fun eliminarPerfil(userId: String): Result<Unit> {
+        return try {
+            db.collection("users")
+                .document(userId)
+                .delete()
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
