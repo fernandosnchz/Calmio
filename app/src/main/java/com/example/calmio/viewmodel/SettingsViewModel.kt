@@ -5,9 +5,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.example.calmio.data.UserPreferences
+import com.example.calmio.data.repository.FirebaseAuthRepository
 import com.example.calmio.data.repository.FirestoreUserRepository
 import com.example.calmio.worker.ReminderWorker
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +19,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
-// Toda la información que necesita la pantalla de ajustes, en una sola caja.
+// Toda la informacion que necesita la pantalla de ajustes, en una sola caja.
 data class SettingsUiState(
     val darkMode: Boolean = false,
     val notificationsEnabled: Boolean = false,
@@ -25,7 +27,11 @@ data class SettingsUiState(
     val reminderHour: Int = 20,
     val reminderMinute: Int = 0,
     val nombreUsuario: String = "",
-    val emailUsuario: String = ""
+    val emailUsuario: String = "",
+    // Estado del borrado de cuenta:
+    val borrandoCuenta: Boolean = false,   // true mientras se esta borrando
+    val cuentaBorrada: Boolean = false,    // true cuando se ha borrado con exito
+    val errorBorrado: String? = null       // mensaje si algo falla
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -33,6 +39,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val prefs       = UserPreferences(application)
     private val workManager = WorkManager.getInstance(application)
     private val userRepo    = FirestoreUserRepository()
+    private val authRepo    = FirebaseAuthRepository()
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -97,6 +104,62 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             prefs.setReminderTime(hour, minute)
             if (_uiState.value.notificationsEnabled) scheduleReminder(hour, minute)
         }
+    }
+
+    // -- Borrado de cuenta -----------------------------------------------------
+    // Borra primero los datos del usuario en Firestore (el perfil) y despues la
+    // cuenta de autenticacion. El orden importa: necesitamos el userId (que viene
+    // de la cuenta de Auth) para saber que datos borrar, asi que la cuenta se borra
+    // la ultima.
+    fun eliminarCuenta() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(borrandoCuenta = true, errorBorrado = null) }
+
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            if (userId == null) {
+                _uiState.update {
+                    it.copy(borrandoCuenta = false, errorBorrado = "No hay sesion iniciada")
+                }
+                return@launch
+            }
+
+            // 1. Borrar los datos del perfil en Firestore.
+            val perfilBorrado = userRepo.eliminarPerfil(userId)
+            if (perfilBorrado.isFailure) {
+                _uiState.update {
+                    it.copy(
+                        borrandoCuenta = false,
+                        errorBorrado = "No se pudieron borrar tus datos. Intentalo de nuevo."
+                    )
+                }
+                return@launch
+            }
+
+            // 2. Borrar la cuenta de autenticacion.
+            val cuentaBorrada = authRepo.eliminarCuentaAuth()
+            cuentaBorrada
+                .onSuccess {
+                    // Cancelamos cualquier recordatorio programado para esta cuenta.
+                    cancelReminder()
+                    _uiState.update { it.copy(borrandoCuenta = false, cuentaBorrada = true) }
+                }
+                .onFailure { error ->
+                    // Caso especial: Firebase exige haber iniciado sesion recientemente.
+                    val mensaje = if (error is FirebaseAuthRecentLoginRequiredException) {
+                        "Por seguridad, vuelve a iniciar sesion antes de borrar tu cuenta."
+                    } else {
+                        "No se pudo borrar la cuenta. Intentalo de nuevo."
+                    }
+                    _uiState.update {
+                        it.copy(borrandoCuenta = false, errorBorrado = mensaje)
+                    }
+                }
+        }
+    }
+
+    // Limpia el mensaje de error una vez la pantalla lo ha mostrado.
+    fun limpiarErrorBorrado() {
+        _uiState.update { it.copy(errorBorrado = null) }
     }
 
     private fun scheduleReminder(hour: Int, minute: Int) {
