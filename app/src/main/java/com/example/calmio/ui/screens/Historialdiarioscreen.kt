@@ -215,7 +215,7 @@ private fun agruparPorDia(entradas: List<EntradaDiarioMemoria>): List<DiaConEntr
     return entradas
         .groupBy { fmtClave.format(Date(it.fechaTimestamp)) }
         .entries
-        .sortedByDescending { it.key }
+        .sortedByDescending { (_, lista) -> lista.maxOf { it.fechaTimestamp } }
         .map { (clave, lista) ->
             val fecha    = fmtClave.parse(clave) ?: Date()
             val etiqueta = when (clave) {
