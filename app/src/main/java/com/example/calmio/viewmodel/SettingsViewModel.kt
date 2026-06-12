@@ -29,9 +29,9 @@ data class SettingsUiState(
     val nombreUsuario: String = "",
     val emailUsuario: String = "",
     // Estado del borrado de cuenta:
-    val borrandoCuenta: Boolean = false,   // true mientras se esta borrando
-    val cuentaBorrada: Boolean = false,    // true cuando se ha borrado con exito
-    val errorBorrado: String? = null       // mensaje si algo falla
+    val borrandoCuenta: Boolean = false,
+    val cuentaBorrada: Boolean = false,
+    val errorBorrado: String? = null
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
