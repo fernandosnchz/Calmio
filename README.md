@@ -57,20 +57,43 @@ Este proyecto ha sido desarrollado como Proyecto Final del ciclo de Desarrollo d
 3. Conecta un dispositivo Android o inicia un emulador.
 4. Pulsa el botón de ejecutar.
 
-> **Nota:** para que la sincronización funcione, el proyecto necesita estar conectado a un proyecto de Firebase con su archivo `google-services.json`..
+> **Nota:** para que la sincronización funcione, el proyecto necesita estar conectado a un proyecto de Firebase con su archivo `google-services.json`.
 
 ---
 
 ## 📱 Capturas de pantalla
 
+<p align="center"><b>Acceso</b></p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/557ab07b-cc3f-4ad3-9051-0de9a18200bc" width="480" alt="Inicio de sesión y registro">
+</p>
+<p align="center"><i>Inicio de sesión y creación de cuenta</i></p>
 
-<img width="473" height="492" alt="Captura de pantalla 2026-06-12 215222" src="https://github.com/user-attachments/assets/557ab07b-cc3f-4ad3-9051-0de9a18200bc" />
-<img width="357" height="800" alt="Captura de pantalla 2026-06-12 215703" src="https://github.com/user-attachments/assets/f3c6e457-66ea-49db-ba62-b99821f52585" />
-<img width="757" height="402" alt="Captura de pantalla 2026-06-12 215942" src="https://github.com/user-attachments/assets/b15e5c08-f8f0-4fce-9286-166ba47e679e" />
-<img width="358" height="800" alt="Captura de pantalla 2026-06-12 223023" src="https://github.com/user-attachments/assets/c0a57e43-2894-4e4a-8cea-1d201c2b3022" />
-<img width="358" height="799" alt="Captura de pantalla 2026-06-12 220408" src="https://github.com/user-attachments/assets/aa67d2e7-91c1-4be8-ab6a-321465c49c09" />
-<img width="615" height="644" alt="Captura de pantalla 2026-06-12 222509" src="https://github.com/user-attachments/assets/092a4bb2-23ca-48bc-8092-4e90ee118e53" />
+<br>
 
+<p align="center"><b>Minijuegos y medición del estrés</b></p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b15e5c08-f8f0-4fce-9286-166ba47e679e" width="720" alt="Medir el estrés, jugar y volver a medirlo">
+</p>
+<p align="center"><i>El usuario indica su nivel de estrés, juega un minijuego y vuelve a medirlo al terminar</i></p>
+
+<br>
+
+<p align="center"><b>Diario, juegos y ajustes</b></p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f3c6e457-66ea-49db-ba62-b99821f52585" width="230" alt="Lista de minijuegos">
+  <img src="https://github.com/user-attachments/assets/aa67d2e7-91c1-4be8-ab6a-321465c49c09" width="230" alt="Diario emocional">
+  <img src="https://github.com/user-attachments/assets/c0a57e43-2894-4e4a-8cea-1d201c2b3022" width="230" alt="Ajustes y recordatorios">
+</p>
+<p align="center"><i>Lista de minijuegos · Diario emocional · Ajustes y recordatorios</i></p>
+
+<br>
+
+<p align="center"><b>Historial y progreso</b></p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/092a4bb2-23ca-48bc-8092-4e90ee118e53" width="480" alt="Historial con gráficas y sesiones recientes">
+</p>
+<p align="center"><i>Evolución del estrés, racha de días seguidos y sesiones recientes</i></p>
 
 ---
 
