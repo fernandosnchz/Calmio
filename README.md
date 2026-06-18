@@ -40,12 +40,12 @@ Este proyecto ha sido desarrollado como Proyecto Final del ciclo de Desarrollo d
 
 ## 🚀 Instalación
 
-### Opción 1: Instalar el APK
+### Opción 1: Descargar el APK (recomendada)
 
-1. Descarga el archivo APK de la aplicación.
-2. En el dispositivo, permite la instalación de aplicaciones de orígenes desconocidos.
-3. Abre el archivo APK y pulsa instalar.
-4. Una vez instalada, abre Calmio desde el menú de aplicaciones.
+1. Entra en la última versión: **[Descargar Calmio (APK)](https://github.com/fernandosnchz/Calmio/releases/latest)**
+2. Descarga el archivo `Calmio.apk` desde la sección **Assets**.
+3. En tu móvil Android, permite la instalación de apps de orígenes desconocidos.
+4. Abre el APK y pulsa instalar.
 
 ### Opción 2: Ejecutar desde Android Studio
 
@@ -53,12 +53,11 @@ Este proyecto ha sido desarrollado como Proyecto Final del ciclo de Desarrollo d
    ```
    git clone https://github.com/fernandosnchz/Calmio.git
    ```
-2. Abre el proyecto en **Android Studio**.
-3. Espera a que se sincronicen las dependencias.
-4. Conecta un dispositivo Android o inicia un emulador.
-5. Pulsa el botón de ejecutar.
+2. Abre el proyecto en **Android Studio** y espera a que se sincronicen las dependencias.
+3. Conecta un dispositivo Android o inicia un emulador.
+4. Pulsa el botón de ejecutar.
 
-> **Nota:** para que la sincronización de datos funcione, el proyecto necesita estar conectado a un proyecto de Firebase con su archivo `google-services.json`.
+> **Nota:** para que la sincronización funcione, el proyecto necesita estar conectado a un proyecto de Firebase con su archivo `google-services.json`..
 
 ---
 
