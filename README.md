@@ -63,12 +63,14 @@ Este proyecto ha sido desarrollado como Proyecto Final del ciclo de Desarrollo d
 
 ## 📱 Capturas de pantalla
 
-<!-- Sustituye estas líneas por tus propias capturas. Ejemplo:
-![Pantalla de inicio](capturas/login.png)
-![Pantalla de juegos](capturas/juegos.png)
--->
 
-*(Próximamente)*
+<img width="473" height="492" alt="Captura de pantalla 2026-06-12 215222" src="https://github.com/user-attachments/assets/557ab07b-cc3f-4ad3-9051-0de9a18200bc" />
+<img width="357" height="800" alt="Captura de pantalla 2026-06-12 215703" src="https://github.com/user-attachments/assets/f3c6e457-66ea-49db-ba62-b99821f52585" />
+<img width="757" height="402" alt="Captura de pantalla 2026-06-12 215942" src="https://github.com/user-attachments/assets/b15e5c08-f8f0-4fce-9286-166ba47e679e" />
+<img width="358" height="800" alt="Captura de pantalla 2026-06-12 223023" src="https://github.com/user-attachments/assets/c0a57e43-2894-4e4a-8cea-1d201c2b3022" />
+<img width="358" height="799" alt="Captura de pantalla 2026-06-12 220408" src="https://github.com/user-attachments/assets/aa67d2e7-91c1-4be8-ab6a-321465c49c09" />
+<img width="615" height="644" alt="Captura de pantalla 2026-06-12 222509" src="https://github.com/user-attachments/assets/092a4bb2-23ca-48bc-8092-4e90ee118e53" />
+
 
 ---
 
